@@ -64,6 +64,38 @@
   gap: 1.5rem;
 }
 
+/* Estados: Loading, Error, Empty */
+.home-loading,
+.home-error,
+.home-empty {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+.home-loading p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.home-error {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.home-error p {
+  font-size: 1rem;
+  color: #fca5a5;
+}
+
+.home-empty p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .home-events-grid {

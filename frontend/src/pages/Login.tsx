@@ -3,24 +3,21 @@ import { useNavigate, Link } from 'react-router-dom';
 import { AuthLayout } from '../components/layout/AuthLayout/AuthLayout';
 import { Button, Input, Card } from '../components/common';
 import { Mail, Lock, AlertCircle } from 'lucide-react';
+import { authService, handleApiError } from '../services';
+import type { LoginFormData } from '../types';
 import './Login.css';
 
-interface LoginFormData {
-  username: string;
-  password: string;
-}
-
 interface FormErrors {
-  username?: string;
-  password?: string;
+  usuario?: string;
+  clave?: string;
   general?: string;
 }
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<LoginFormData>({
-    username: '',
-    password: '',
+    usuario: '',
+    clave: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -44,14 +41,14 @@ export const Login: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.username.trim()) {
-      newErrors.username = 'El nombre de usuario es requerido';
+    if (!formData.usuario.trim()) {
+      newErrors.usuario = 'El nombre de usuario es requerido';
     }
 
-    if (!formData.password) {
-      newErrors.password = 'La contraseña es requerida';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+    if (!formData.clave) {
+      newErrors.clave = 'La contraseña es requerida';
+    } else if (formData.clave.length < 3) {
+      newErrors.clave = 'La contraseña debe tener al menos 3 caracteres';
     }
 
     setErrors(newErrors);
@@ -60,7 +57,7 @@ export const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -69,24 +66,17 @@ export const Login: React.FC = () => {
     setErrors({});
 
     try {
-      // TODO: Aquí irá la llamada a la API
-      // const response = await authService.login(formData);
-      
-      // Simulación de login (remover cuando tengamos backend)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      console.log('Login exitoso:', formData);
-      
-      // TODO: Guardar token y usuario
-      // localStorage.setItem('token', response.token);
-      // localStorage.setItem('user', JSON.stringify(response.user));
-      
+      // Llamada a la API
+      const { user, token } = await authService.login(formData);
+
+      console.log('Login exitoso:', user);
+
       // Redirigir al home
       navigate('/home');
     } catch (error: any) {
       console.error('Error en login:', error);
       setErrors({
-        general: error.response?.data?.message || 'Error al iniciar sesión. Verifica tus credenciales.',
+        general: handleApiError(error),
       });
     } finally {
       setIsLoading(false);
@@ -108,14 +98,14 @@ export const Login: React.FC = () => {
 
           {/* Campo de usuario */}
           <Input
-            id="username"
-            name="username"
+            id="usuario"
+            name="usuario"
             type="text"
             label="Nombre de usuario"
             placeholder="mangelrogel420"
-            value={formData.username}
+            value={formData.usuario}
             onChange={handleChange}
-            error={errors.username}
+            error={errors.usuario}
             icon={<Mail size={20} />}
             fullWidth
             disabled={isLoading}
@@ -123,14 +113,14 @@ export const Login: React.FC = () => {
 
           {/* Campo de contraseña */}
           <Input
-            id="password"
-            name="password"
+            id="clave"
+            name="clave"
             type="password"
             label="Contraseña"
             placeholder="••••••••"
-            value={formData.password}
+            value={formData.clave}
             onChange={handleChange}
-            error={errors.password}
+            error={errors.clave}
             icon={<Lock size={20} />}
             fullWidth
             disabled={isLoading}
