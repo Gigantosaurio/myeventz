@@ -1,38 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Logo } from '../../common';
 import { Home, Tag, Plus, Search, User, LogOut, Menu, X } from 'lucide-react';
+import { authService } from '../../../services';
+import { getProfileImageUrl } from '../../../utils/imageUtils';
 import './Sidebar.css';
 
 /**
  * Sidebar - Navegación lateral principal de la aplicación
- * 
+ *
  * Características:
  * - Navegación con 5 items principales
  * - Indicador visual del item activo
  * - Información del usuario en la parte inferior
  * - Botón de logout
  * - Modo colapsable (hamburguesa)
- * 
- * TODO: Conectar con el backend para obtener datos del usuario real
  */
 
 interface SidebarProps {
   className?: string;
+  onCollapse?: (collapsed: boolean) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ className = '', onCollapse }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const user = authService.getStoredUser();
 
-  // TODO: Obtener datos del usuario del contexto o del localStorage
-  // TODO: Cuando tengamos backend, hacer fetch a /api/auth/me
-  const currentUser = {
-    fullName: 'Miguel Ángel Rogel R',
-    username: '@mangelrogel420',
-    avatar: null, // TODO: Implementar subida de avatar
-  };
+  const currentUser = user ? {
+    fullName: `${user.nombre} ${user.apel1} ${user.apel2 || ''}`.trim(),
+    username: `@${user.usuario}`,
+    avatar: getProfileImageUrl(user.imagen_perfil),
+  } : null;
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/home' },
@@ -54,8 +54,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
   };
 
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
+    const newCollapsed = !isCollapsed;
+    setIsCollapsed(newCollapsed);
+    onCollapse?.(newCollapsed);
   };
+
+  if (!currentUser) {
+    return null; // No mostrar sidebar si no hay usuario logeado
+  }
 
   return (
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${className}`}>
