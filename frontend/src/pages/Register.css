@@ -54,6 +54,55 @@
   gap: 1rem;
 }
 
+/* Bio textarea */
+.register-bio-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.register-bio-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.register-bio-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  resize: vertical;
+  transition: all var(--transition-normal);
+}
+
+.register-bio-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.register-bio-textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+/* Error general banner */
+.register-error-banner {
+  padding: 0.875rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-lg);
+  color: #fca5a5;
+  font-size: 0.875rem;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
 /* Hobbies (Paso 3) */
 .register-hobbies {
   display: flex;

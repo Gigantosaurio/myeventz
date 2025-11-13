@@ -1,43 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthLayout } from '../components/layout/AuthLayout/AuthLayout';
 import { Button, Input, Card, Tag } from '../components/common';
 import { PageTransition } from '../components/common/PageTransition/PageTransition';
-import { Mail, Lock, User, Calendar, ArrowLeft, ArrowRight } from 'lucide-react';
-import { colors } from '../styles/colors';
+import { Lock, User, Calendar, ArrowLeft, ArrowRight } from 'lucide-react';
+import { authService, categoryService, handleApiError } from '../services';
+import type { RegisterFormData, Category } from '../types';
 import './Register.css';
-
-interface RegisterFormData {
-  username: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  dateOfBirth: string;
-  firstName: string;
-  lastName: string;
-  hobbies: string[];
-}
 
 interface FormErrors {
   [key: string]: string;
 }
-
-const HOBBIES = [
-  { name: 'Audiovisual', color: colors.categories.audiovisual },
-  { name: 'Baloncesto', color: colors.categories.baloncesto },
-  { name: 'Calistenia', color: colors.categories.calistenia },
-  { name: 'Ciclismo', color: colors.categories.ciclismo },
-  { name: 'Cocina', color: colors.categories.cocina },
-  { name: 'Crossfit', color: colors.categories.crossfit },
-  { name: 'Danza', color: colors.categories.danza },
-  { name: 'Escalada', color: colors.categories.escalada },
-  { name: 'Esgrima', color: colors.categories.esgrima },
-  { name: 'Fútbol', color: colors.categories.futbol },
-  { name: 'Gimnasia', color: colors.categories.gimnasia },
-  { name: 'Golf', color: colors.categories.golf },
-  { name: 'Karate', color: colors.categories.karate },
-  { name: 'Motocross', color: colors.categories.motocross },
-];
 
 export const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -45,19 +18,34 @@ export const Register: React.FC = () => {
   const [direction, setDirection] = useState<'left' | 'right'>('right');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
-  
+  const [categories, setCategories] = useState<Category[]>([]);
+
   const [formData, setFormData] = useState<RegisterFormData>({
-    username: '',
-    email: '',
-    password: '',
+    usuario: '',
+    clave: '',
     confirmPassword: '',
-    dateOfBirth: '',
-    firstName: '',
-    lastName: '',
+    nombre: '',
+    apel1: '',
+    apel2: '',
+    f_nac: '',
+    bio: '',
     hobbies: [],
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Cargar categorías al montar el componente
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const cats = await categoryService.getAllCategories();
+        setCategories(cats);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -71,44 +59,38 @@ export const Register: React.FC = () => {
     }
   };
 
-  const toggleHobby = (hobby: string) => {
+  const toggleHobby = (categoryId: number) => {
     setFormData(prev => ({
       ...prev,
-      hobbies: prev.hobbies.includes(hobby)
-        ? prev.hobbies.filter(h => h !== hobby)
-        : [...prev.hobbies, hobby],
+      hobbies: prev.hobbies.includes(categoryId)
+        ? prev.hobbies.filter(id => id !== categoryId)
+        : [...prev.hobbies, categoryId],
     }));
   };
 
   const validateStep1 = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.username.trim()) {
-      newErrors.username = 'El nombre de usuario es requerido';
-    } else if (formData.username.length < 4) {
-      newErrors.username = 'El usuario debe tener al menos 4 caracteres';
+    if (!formData.usuario.trim()) {
+      newErrors.usuario = 'El nombre de usuario es requerido';
+    } else if (formData.usuario.length < 3) {
+      newErrors.usuario = 'El usuario debe tener al menos 3 caracteres';
     }
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'El correo electrónico es requerido';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'El correo electrónico no es válido';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'La contraseña es requerida';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+    if (!formData.clave) {
+      newErrors.clave = 'La contraseña es requerida';
+    } else if (formData.clave.length < 3) {
+      newErrors.clave = 'La contraseña debe tener al menos 3 caracteres';
     }
 
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Confirma tu contraseña';
-    } else if (formData.password !== formData.confirmPassword) {
+    } else if (formData.clave !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Las contraseñas no coinciden';
     }
 
-    if (!formData.dateOfBirth) {
-      newErrors.dateOfBirth = 'La fecha de nacimiento es requerida';
+    if (!formData.f_nac) {
+      newErrors.f_nac = 'La fecha de nacimiento es requerida';
     }
 
     setErrors(newErrors);
@@ -118,12 +100,12 @@ export const Register: React.FC = () => {
   const validateStep2 = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'El nombre es requerido';
+    if (!formData.nombre.trim()) {
+      newErrors.nombre = 'El nombre es requerido';
     }
 
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Los apellidos son requeridos';
+    if (!formData.apel1.trim()) {
+      newErrors.apel1 = 'El primer apellido es requerido';
     }
 
     setErrors(newErrors);
@@ -175,18 +157,21 @@ export const Register: React.FC = () => {
     setErrors({});
 
     try {
-      // TODO: Aquí irá la llamada a la API
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      console.log('Registro exitoso:', formData);
-      
-      // Redirigir al login
-      navigate('/login');
+      // Llamada a la API
+      await authService.register(formData);
+
+      console.log('Registro exitoso');
+
+      // Redirigir al home directamente (el servicio ya guarda el token)
+      navigate('/home');
     } catch (error: any) {
       console.error('Error en registro:', error);
       setErrors({
-        general: error.response?.data?.message || 'Error al crear la cuenta',
+        general: handleApiError(error),
       });
+      // Volver al paso 1 si hay error
+      setDirection('left');
+      setCurrentStep(1);
     } finally {
       setIsLoading(false);
     }
@@ -236,58 +221,55 @@ export const Register: React.FC = () => {
 
         <PageTransition direction={direction}>
           <form onSubmit={currentStep === 3 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }} className="register-form">
+            {/* Error general */}
+            {errors.general && (
+              <div className="register-error-banner">
+                {errors.general}
+              </div>
+            )}
+
             {/* Step 1: Datos de usuario */}
             {currentStep === 1 && (
               <div className="register-step-content">
                 <Input
-                  id="username"
-                  name="username"
+                  id="usuario"
+                  name="usuario"
                   type="text"
                   label="Nombre de usuario"
                   placeholder="mangelrogel420"
-                  value={formData.username}
+                  value={formData.usuario}
                   onChange={handleChange}
-                  error={errors.username}
+                  error={errors.usuario}
                   icon={<User size={20} />}
                   fullWidth
+                  disabled={isLoading}
                 />
 
                 <Input
-                  id="dateOfBirth"
-                  name="dateOfBirth"
+                  id="f_nac"
+                  name="f_nac"
                   type="date"
                   label="Fecha de nacimiento"
-                  value={formData.dateOfBirth}
+                  value={formData.f_nac}
                   onChange={handleChange}
-                  error={errors.dateOfBirth}
+                  error={errors.f_nac}
                   icon={<Calendar size={20} />}
                   fullWidth
+                  disabled={isLoading}
                 />
 
                 <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  label="Correo Electrónico"
-                  placeholder="armange69@gmail.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  error={errors.email}
-                  icon={<Mail size={20} />}
-                  fullWidth
-                />
-
-                <Input
-                  id="password"
-                  name="password"
+                  id="clave"
+                  name="clave"
                   type="password"
                   label="Contraseña"
                   placeholder="••••••••"
-                  value={formData.password}
+                  value={formData.clave}
                   onChange={handleChange}
-                  error={errors.password}
+                  error={errors.clave}
                   icon={<Lock size={20} />}
                   fullWidth
+                  disabled={isLoading}
                 />
 
                 <Input
@@ -301,6 +283,7 @@ export const Register: React.FC = () => {
                   error={errors.confirmPassword}
                   icon={<Lock size={20} />}
                   fullWidth
+                  disabled={isLoading}
                 />
               </div>
             )}
@@ -308,29 +291,59 @@ export const Register: React.FC = () => {
             {/* Step 2: Nombre y apellidos */}
             {currentStep === 2 && (
               <div className="register-step-content">
+                <Input
+                  id="nombre"
+                  name="nombre"
+                  type="text"
+                  label="Nombre"
+                  placeholder="Miguel Ángel"
+                  value={formData.nombre}
+                  onChange={handleChange}
+                  error={errors.nombre}
+                  fullWidth
+                  disabled={isLoading}
+                />
+
                 <div className="register-name-row">
                   <Input
-                    id="firstName"
-                    name="firstName"
+                    id="apel1"
+                    name="apel1"
                     type="text"
-                    label="Nombre"
-                    placeholder="Miguel Ángel"
-                    value={formData.firstName}
+                    label="Primer Apellido"
+                    placeholder="Rogel"
+                    value={formData.apel1}
                     onChange={handleChange}
-                    error={errors.firstName}
+                    error={errors.apel1}
                     fullWidth
+                    disabled={isLoading}
                   />
 
                   <Input
-                    id="lastName"
-                    name="lastName"
+                    id="apel2"
+                    name="apel2"
                     type="text"
-                    label="Apellidos"
-                    placeholder="Rogel Ruiz"
-                    value={formData.lastName}
+                    label="Segundo Apellido (opcional)"
+                    placeholder="Ruiz"
+                    value={formData.apel2 || ''}
                     onChange={handleChange}
-                    error={errors.lastName}
                     fullWidth
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="register-bio-container">
+                  <label htmlFor="bio" className="register-bio-label">
+                    Bio (opcional)
+                  </label>
+                  <textarea
+                    id="bio"
+                    name="bio"
+                    placeholder="Cuéntanos algo sobre ti..."
+                    value={formData.bio || ''}
+                    onChange={handleChange}
+                    className="register-bio-textarea"
+                    rows={3}
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -343,14 +356,14 @@ export const Register: React.FC = () => {
                   <div className="register-error-text">{errors.hobbies}</div>
                 )}
                 <div className="register-hobbies">
-                  {HOBBIES.map(hobby => (
+                  {categories.map(category => (
                     <Tag
-                      key={hobby.name}
-                      color={hobby.color}
-                      selected={formData.hobbies.includes(hobby.name)}
-                      onClick={() => toggleHobby(hobby.name)}
+                      key={category.id_categoria}
+                      color={category.color}
+                      selected={formData.hobbies.includes(category.id_categoria)}
+                      onClick={() => toggleHobby(category.id_categoria)}
                     >
-                      {hobby.name}
+                      {category.categoria}
                     </Tag>
                   ))}
                 </div>
@@ -379,6 +392,7 @@ export const Register: React.FC = () => {
                   type="submit"
                   variant="primary"
                   fullWidth={currentStep === 1}
+                  disabled={isLoading}
                 >
                   Continuar
                   <ArrowRight size={20} />
