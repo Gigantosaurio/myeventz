@@ -3,26 +3,97 @@ import { dbPool } from '../config/database';
 import { EventCreateInput, EventDetail } from '../types';
 
 /**
- * Obtener eventos populares
+ * Obtener eventos populares (ordenados por participantes y likes)
  */
 export const getPopularEvents = async (limit: number = 10): Promise<any[]> => {
   const [rows] = await dbPool.execute<RowDataPacket[]>(
-    `CALL sp_eventos_populares(?)`,
+    `SELECT
+      e.id_evento,
+      e.id_usuario,
+      e.titulo,
+      e.fecha,
+      e.hora,
+      e.descripcion,
+      e.edad_min,
+      e.edad_max,
+      e.ubicacion,
+      e.lat,
+      e.lng,
+      e.max_participantes,
+      e.imagen,
+      e.created_at,
+      e.updated_at,
+      CONCAT(u.nombre, ' ', u.apel1, ' ', IFNULL(u.apel2, '')) AS organizador_nombre,
+      u.usuario AS organizador_usuario,
+      u.imagen_perfil AS organizador_imagen,
+      u.id_usuario AS organizador_id,
+      c.categoria AS categoria_nombre,
+      c.color AS categoria_color,
+      COUNT(DISTINCT pe.id_usuario) AS participantes_actuales,
+      COUNT(DISTINCT el.id_usuario) AS total_likes
+    FROM eventos e
+    JOIN usuarios u ON e.id_usuario = u.id_usuario
+    LEFT JOIN eventos_categorias ec ON e.id_evento = ec.id_evento
+    LEFT JOIN categorias c ON ec.id_categoria = c.id_categoria
+    LEFT JOIN participantes_eventos pe ON e.id_evento = pe.id_evento
+    LEFT JOIN eventos_likes el ON e.id_evento = el.id_evento
+    WHERE e.fecha >= CURDATE()
+    GROUP BY e.id_evento, e.id_usuario, e.titulo, e.fecha, e.hora, e.descripcion,
+             e.edad_min, e.edad_max, e.ubicacion, e.lat, e.lng, e.max_participantes,
+             e.imagen, e.created_at, e.updated_at, u.nombre, u.apel1, u.apel2,
+             u.usuario, u.imagen_perfil, u.id_usuario, c.categoria, c.color
+    ORDER BY (COUNT(DISTINCT pe.id_usuario) + COUNT(DISTINCT el.id_usuario)) DESC, e.fecha ASC
+    LIMIT ?`,
     [limit]
   );
-  // Los procedimientos almacenados devuelven array de arrays
-  return Array.isArray(rows[0]) ? rows[0] : [];
+  return rows;
 };
 
 /**
- * Obtener eventos recientes
+ * Obtener eventos recientes (ordenados por fecha de creación)
  */
 export const getRecentEvents = async (limit: number = 20): Promise<any[]> => {
   const [rows] = await dbPool.execute<RowDataPacket[]>(
-    `CALL sp_eventos_recientes(?)`,
+    `SELECT
+      e.id_evento,
+      e.id_usuario,
+      e.titulo,
+      e.fecha,
+      e.hora,
+      e.descripcion,
+      e.edad_min,
+      e.edad_max,
+      e.ubicacion,
+      e.lat,
+      e.lng,
+      e.max_participantes,
+      e.imagen,
+      e.created_at,
+      e.updated_at,
+      CONCAT(u.nombre, ' ', u.apel1, ' ', IFNULL(u.apel2, '')) AS organizador_nombre,
+      u.usuario AS organizador_usuario,
+      u.imagen_perfil AS organizador_imagen,
+      u.id_usuario AS organizador_id,
+      c.categoria AS categoria_nombre,
+      c.color AS categoria_color,
+      COUNT(DISTINCT pe.id_usuario) AS participantes_actuales,
+      COUNT(DISTINCT el.id_usuario) AS total_likes
+    FROM eventos e
+    JOIN usuarios u ON e.id_usuario = u.id_usuario
+    LEFT JOIN eventos_categorias ec ON e.id_evento = ec.id_evento
+    LEFT JOIN categorias c ON ec.id_categoria = c.id_categoria
+    LEFT JOIN participantes_eventos pe ON e.id_evento = pe.id_evento
+    LEFT JOIN eventos_likes el ON e.id_evento = el.id_evento
+    WHERE e.fecha >= CURDATE()
+    GROUP BY e.id_evento, e.id_usuario, e.titulo, e.fecha, e.hora, e.descripcion,
+             e.edad_min, e.edad_max, e.ubicacion, e.lat, e.lng, e.max_participantes,
+             e.imagen, e.created_at, e.updated_at, u.nombre, u.apel1, u.apel2,
+             u.usuario, u.imagen_perfil, u.id_usuario, c.categoria, c.color
+    ORDER BY e.created_at DESC
+    LIMIT ?`,
     [limit]
   );
-  return Array.isArray(rows[0]) ? rows[0] : [];
+  return rows;
 };
 
 /**
@@ -100,11 +171,66 @@ export const searchEvents = async (
   searchTerm?: string,
   categoryIds?: string
 ): Promise<any[]> => {
-  const [rows] = await dbPool.execute<RowDataPacket[]>(
-    `CALL sp_buscar_eventos(?, ?)`,
-    [searchTerm || null, categoryIds || null]
-  );
-  return Array.isArray(rows[0]) ? rows[0] : [];
+  let query = `
+    SELECT
+      e.id_evento,
+      e.id_usuario,
+      e.titulo,
+      e.fecha,
+      e.hora,
+      e.descripcion,
+      e.edad_min,
+      e.edad_max,
+      e.ubicacion,
+      e.lat,
+      e.lng,
+      e.max_participantes,
+      e.imagen,
+      e.created_at,
+      e.updated_at,
+      CONCAT(u.nombre, ' ', u.apel1, ' ', IFNULL(u.apel2, '')) AS organizador_nombre,
+      u.usuario AS organizador_usuario,
+      u.imagen_perfil AS organizador_imagen,
+      u.id_usuario AS organizador_id,
+      c.categoria AS categoria_nombre,
+      c.color AS categoria_color,
+      COUNT(DISTINCT pe.id_usuario) AS participantes_actuales,
+      COUNT(DISTINCT el.id_usuario) AS total_likes
+    FROM eventos e
+    JOIN usuarios u ON e.id_usuario = u.id_usuario
+    LEFT JOIN eventos_categorias ec ON e.id_evento = ec.id_evento
+    LEFT JOIN categorias c ON ec.id_categoria = c.id_categoria
+    LEFT JOIN participantes_eventos pe ON e.id_evento = pe.id_evento
+    LEFT JOIN eventos_likes el ON e.id_evento = el.id_evento
+    WHERE 1=1
+  `;
+
+  const params: any[] = [];
+
+  // Filtro por término de búsqueda
+  if (searchTerm) {
+    query += ` AND (e.titulo LIKE ? OR e.descripcion LIKE ? OR e.ubicacion LIKE ?)`;
+    const searchPattern = `%${searchTerm}%`;
+    params.push(searchPattern, searchPattern, searchPattern);
+  }
+
+  // Filtro por categorías
+  if (categoryIds) {
+    const categoryArray = categoryIds.split(',').map(id => parseInt(id.trim()));
+    query += ` AND ec.id_categoria IN (${categoryArray.map(() => '?').join(',')})`;
+    params.push(...categoryArray);
+  }
+
+  query += `
+    GROUP BY e.id_evento, e.id_usuario, e.titulo, e.fecha, e.hora, e.descripcion,
+             e.edad_min, e.edad_max, e.ubicacion, e.lat, e.lng, e.max_participantes,
+             e.imagen, e.created_at, e.updated_at, u.nombre, u.apel1, u.apel2,
+             u.usuario, u.imagen_perfil, u.id_usuario, c.categoria, c.color
+    ORDER BY e.fecha ASC
+  `;
+
+  const [rows] = await dbPool.execute<RowDataPacket[]>(query, params);
+  return rows;
 };
 
 /**
