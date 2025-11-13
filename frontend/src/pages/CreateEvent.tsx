@@ -98,7 +98,7 @@ export const CreateEvent: React.FC = () => {
         return;
       }
 
-      setFormData((prev) => ({ ...prev, image: file }));
+      setFormData((prev) => ({ ...prev, imagen: file }));
 
       // Crear preview
       const reader = new FileReader();
@@ -111,7 +111,7 @@ export const CreateEvent: React.FC = () => {
   };
 
   const handleRemoveImage = () => {
-    setFormData((prev) => ({ ...prev, image: null }));
+    setFormData((prev) => ({ ...prev, imagen: null }));
     setImagePreview(null);
   };
 

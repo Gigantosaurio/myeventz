@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getProfileImageUrl } from '../utils/imageUtils';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout/MainLayout';
 import { Input, Card } from '../components/common';
@@ -89,8 +90,8 @@ export const UserSearch: React.FC = () => {
                 >
                   <div className="user-search-card-content">
                     <div className="user-search-avatar">
-                      {user.imagen_perfil ? (
-                        <img src={user.imagen_perfil} alt={user.usuario} />
+                      {getProfileImageUrl(user.imagen_perfil) ? (
+                        <img src={getProfileImageUrl(user.imagen_perfil)!} alt={user.usuario} />
                       ) : (
                         <User size={24} />
                       )}

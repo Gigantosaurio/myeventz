@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, Tag } from '../../common';
 import { Calendar, MapPin, Users, Heart } from 'lucide-react';
 import type { EventDetail } from '../../../types';
+import { getEventImageUrl } from '../../../utils/imageUtils';
 import './EventCard.css';
 
 interface EventCardProps {
@@ -25,11 +26,13 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
     return `${day}/${month}/${year}`;
   };
 
+  const imageUrl = getEventImageUrl(event.imagen);
+
   return (
     <Card className="event-card" hover clickable onClick={handleClick}>
-      {event.imagen && (
+      {imageUrl && (
         <div className="event-card-image">
-          <img src={event.imagen} alt={event.titulo} />
+          <img src={imageUrl} alt={event.titulo} />
           {event.total_likes !== undefined && event.total_likes > 0 && (
             <div className="event-card-likes">
               <Heart size={16} fill={event.liked_by_user ? 'currentColor' : 'none'} />

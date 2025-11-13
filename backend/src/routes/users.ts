@@ -239,4 +239,23 @@ router.get('/:id/events/participating', userController.getUserParticipatingEvent
  */
 router.get('/:id/events', userController.getAllUserEvents);
 
+/**
+ * @swagger
+ * /users/{id}/events/liked:
+ *   get:
+ *     tags: [Users]
+ *     summary: Obtener eventos que le gustan a un usuario
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
+ *     responses:
+ *       200:
+ *         description: Lista de eventos favoritos del usuario
+ */
+router.get('/:id/events/liked', userController.getUserLikedEvents);
+
 export default router;

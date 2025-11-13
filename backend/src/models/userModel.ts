@@ -261,3 +261,40 @@ export const getUserWithStats = async (userId: number): Promise<any | null> => {
     eventos_participando: stats.eventos_participando,
   };
 };
+
+/**
+ * Obtener eventos que le gustan a un usuario
+ */
+export const getUserLikedEvents = async (userId: number): Promise<any[]> => {
+  const [rows] = await dbPool.execute<RowDataPacket[]>(
+    `SELECT
+      e.id_evento, e.id_usuario, e.titulo, e.fecha, e.hora,
+      e.descripcion, e.edad_min, e.edad_max, e.ubicacion,
+      e.lat, e.lng, e.max_participantes, e.imagen,
+      e.created_at, e.updated_at,
+      CONCAT(u.nombre, ' ', u.apel1, ' ', IFNULL(u.apel2, '')) AS organizador_nombre,
+      u.usuario AS organizador_usuario,
+      u.imagen_perfil AS organizador_imagen,
+      u.id_usuario AS organizador_id,
+      c.categoria AS categoria_nombre,
+      c.color AS categoria_color,
+      COUNT(DISTINCT pe.id_usuario) AS participantes_actuales,
+      COUNT(DISTINCT el2.id_usuario) AS total_likes,
+      1 AS liked_by_user
+    FROM eventos_likes el
+    JOIN eventos e ON el.id_evento = e.id_evento
+    JOIN usuarios u ON e.id_usuario = u.id_usuario
+    LEFT JOIN eventos_categorias ec ON e.id_evento = ec.id_evento
+    LEFT JOIN categorias c ON ec.id_categoria = c.id_categoria
+    LEFT JOIN participantes_eventos pe ON e.id_evento = pe.id_evento
+    LEFT JOIN eventos_likes el2 ON e.id_evento = el2.id_evento
+    WHERE el.id_usuario = ?
+    GROUP BY e.id_evento, e.id_usuario, e.titulo, e.fecha, e.hora, e.descripcion,
+             e.edad_min, e.edad_max, e.ubicacion, e.lat, e.lng, e.max_participantes,
+             e.imagen, e.created_at, e.updated_at, u.nombre, u.apel1, u.apel2,
+             u.usuario, u.imagen_perfil, u.id_usuario, c.categoria, c.color
+    ORDER BY el.created_at DESC`,
+    [userId]
+  );
+  return rows;
+};

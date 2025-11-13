@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { getProfileImageUrl } from '../utils/imageUtils';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout/MainLayout';
 import { Card, Tag } from '../components/common';
@@ -14,6 +15,7 @@ export const Profile: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [organizedEvents, setOrganizedEvents] = useState<EventDetail[]>([]);
   const [participatingEvents, setParticipatingEvents] = useState<EventDetail[]>([]);
+  const [likedEvents, setLikedEvents] = useState<EventDetail[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
@@ -37,14 +39,16 @@ export const Profile: React.FC = () => {
         setError(null);
 
         // Cargar perfil y eventos en paralelo
-        const [profileData, eventsData] = await Promise.all([
+        const [profileData, eventsData, likedEventsData] = await Promise.all([
           userService.getUserById(userId),
-          userService.getAllUserEvents(userId)
+          userService.getAllUserEvents(userId),
+          userService.getUserLikedEvents(userId)
         ]);
 
         setProfile(profileData);
         setOrganizedEvents(eventsData.organized as EventDetail[]);
         setParticipatingEvents(eventsData.participating as EventDetail[]);
+        setLikedEvents(likedEventsData as EventDetail[]);
       } catch (err) {
         console.error('Error loading profile:', err);
         setError('Error al cargar el perfil');
@@ -108,8 +112,8 @@ export const Profile: React.FC = () => {
           <Card className="profile-card">
             <div className="profile-info">
               <div className="profile-avatar">
-                {profile.imagen_perfil ? (
-                  <img src={profile.imagen_perfil} alt={profile.nombre} />
+                {getProfileImageUrl(profile.imagen_perfil) ? (
+                  <img src={getProfileImageUrl(profile.imagen_perfil)!} alt={profile.nombre} />
                 ) : (
                   <User size={48} />
                 )}
@@ -194,8 +198,20 @@ export const Profile: React.FC = () => {
             </section>
           )}
 
+          {/* Eventos favoritos */}
+          {likedEvents.length > 0 && (
+            <section className="profile-section">
+              <h2>Eventos favoritos:</h2>
+              <div className="profile-events-grid">
+                {likedEvents.map((event) => (
+                  <EventCard key={event.id_evento} event={event} />
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Sin eventos */}
-          {organizedEvents.length === 0 && participatingEvents.length === 0 && (
+          {organizedEvents.length === 0 && participatingEvents.length === 0 && likedEvents.length === 0 && (
             <div className="profile-empty">
               <p>Este usuario aún no tiene eventos</p>
             </div>

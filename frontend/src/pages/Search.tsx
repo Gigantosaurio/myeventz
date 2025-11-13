@@ -1,49 +1,58 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout/MainLayout';
-import { Input } from '../components/common';
-import { Search as SearchIcon } from 'lucide-react';
+import { Input, Card } from '../components/common';
+import { Search as SearchIcon, User } from 'lucide-react';
 import { EventCard } from '../components/features/EventCard/EventCard';
-import { eventService } from '../services';
-import type { EventDetail } from '../types';
+import { eventService, userService } from '../services';
+import { getProfileImageUrl } from '../utils/imageUtils';
+import type { EventDetail, User as UserType } from '../types';
 import './Search.css';
 
-export const Search: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const initialQuery = searchParams.get('q') || '';
+type SearchTab = 'events' | 'users';
 
-  const [searchQuery, setSearchQuery] = useState(initialQuery);
+export const Search: React.FC = () => {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<SearchTab>('events');
+  const [searchQuery, setSearchQuery] = useState('');
   const [events, setEvents] = useState<EventDetail[]>([]);
+  const [users, setUsers] = useState<UserType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar eventos cuando cambia la búsqueda
+  // Cargar resultados cuando cambia la búsqueda o el tab
   useEffect(() => {
-    const loadEvents = async () => {
+    const loadResults = async () => {
       if (!searchQuery.trim()) {
         setEvents([]);
+        setUsers([]);
         return;
       }
 
       setIsLoading(true);
       setError(null);
       try {
-        const results = await eventService.searchEvents(searchQuery);
-        setEvents(results);
+        if (activeTab === 'events') {
+          const results = await eventService.searchEvents(searchQuery);
+          setEvents(results);
+        } else {
+          const results = await userService.searchUsers(searchQuery);
+          setUsers(results);
+        }
       } catch (err) {
-        console.error('Error searching events:', err);
-        setError('Error al buscar eventos');
+        console.error('Error searching:', err);
+        setError(`Error al buscar ${activeTab === 'events' ? 'eventos' : 'usuarios'}`);
       } finally {
         setIsLoading(false);
       }
     };
 
-    const debounceTimer = setTimeout(loadEvents, 300);
+    const debounceTimer = setTimeout(loadResults, 300);
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
+  }, [searchQuery, activeTab]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUserClick = (userId: number) => {
+    navigate(`/profile/${userId}`);
   };
 
   return (
@@ -51,21 +60,35 @@ export const Search: React.FC = () => {
       <div className="search-page">
         {/* Header */}
         <header className="search-header">
-          <h1>Buscar Eventos</h1>
+          <h1>Buscar</h1>
         </header>
+
+        {/* Tabs */}
+        <div className="search-tabs">
+          <button
+            className={`search-tab ${activeTab === 'events' ? 'active' : ''}`}
+            onClick={() => setActiveTab('events')}
+          >
+            Eventos
+          </button>
+          <button
+            className={`search-tab ${activeTab === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveTab('users')}
+          >
+            Usuarios
+          </button>
+        </div>
 
         {/* Barra de búsqueda */}
         <section className="search-bar-section">
-          <form onSubmit={handleSubmit} className="search-form">
-            <Input
-              type="text"
-              placeholder="Buscar eventos..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              icon={<SearchIcon size={20} />}
-              fullWidth
-            />
-          </form>
+          <Input
+            type="text"
+            placeholder={`Buscar ${activeTab === 'events' ? 'eventos' : 'usuarios'}...`}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            icon={<SearchIcon size={20} />}
+            fullWidth
+          />
         </section>
 
         {/* Resultados */}
@@ -82,32 +105,81 @@ export const Search: React.FC = () => {
             </div>
           )}
 
-          {!isLoading && searchQuery && events.length > 0 && (
+          {/* Resultados de Eventos */}
+          {activeTab === 'events' && !isLoading && !error && (
             <>
-              <h2 className="search-section-title">
-                {events.length} evento{events.length !== 1 ? 's' : ''} encontrado{events.length !== 1 ? 's' : ''}
-              </h2>
-              <div className="search-events-grid">
-                {events.map((event) => (
-                  <EventCard key={event.id_evento} event={event} />
-                ))}
-              </div>
+              {searchQuery && events.length > 0 && (
+                <div className="search-results-grid">
+                  {events.map((event) => (
+                    <EventCard key={event.id_evento} event={event} />
+                  ))}
+                </div>
+              )}
+
+              {searchQuery && events.length === 0 && (
+                <div className="search-empty">
+                  <SearchIcon size={48} />
+                  <p>No se encontraron eventos con "{searchQuery}"</p>
+                </div>
+              )}
+
+              {!searchQuery && (
+                <div className="search-empty">
+                  <SearchIcon size={48} />
+                  <p>Escribe algo para buscar eventos</p>
+                </div>
+              )}
             </>
           )}
 
-          {!isLoading && searchQuery && events.length === 0 && !error && (
-            <div className="search-empty">
-              <SearchIcon size={48} />
-              <p>No se encontraron eventos con "{searchQuery}"</p>
-              <p className="search-empty-hint">Intenta con otro término de búsqueda</p>
-            </div>
-          )}
+          {/* Resultados de Usuarios */}
+          {activeTab === 'users' && !isLoading && !error && (
+            <>
+              {searchQuery && users.length > 0 && (
+                <div className="search-users-list">
+                  {users.map((user) => (
+                    <Card
+                      key={user.id_usuario}
+                      className="search-user-card"
+                      hover
+                      clickable
+                      onClick={() => handleUserClick(user.id_usuario)}
+                    >
+                      <div className="search-user-content">
+                        <div className="search-user-avatar">
+                          {getProfileImageUrl(user.imagen_perfil) ? (
+                            <img src={getProfileImageUrl(user.imagen_perfil)!} alt={user.usuario} />
+                          ) : (
+                            <User size={24} />
+                          )}
+                        </div>
+                        <div className="search-user-info">
+                          <h3 className="search-user-name">
+                            {user.nombre} {user.apel1} {user.apel2 || ''}
+                          </h3>
+                          <p className="search-user-username">@{user.usuario}</p>
+                          {user.bio && <p className="search-user-bio">{user.bio}</p>}
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
 
-          {!searchQuery && !isLoading && (
-            <div className="search-empty">
-              <SearchIcon size={48} />
-              <p>Escribe algo para buscar eventos</p>
-            </div>
+              {searchQuery && users.length === 0 && (
+                <div className="search-empty">
+                  <User size={48} />
+                  <p>No se encontraron usuarios con "{searchQuery}"</p>
+                </div>
+              )}
+
+              {!searchQuery && (
+                <div className="search-empty">
+                  <User size={48} />
+                  <p>Escribe algo para buscar usuarios</p>
+                </div>
+              )}
+            </>
           )}
         </section>
       </div>

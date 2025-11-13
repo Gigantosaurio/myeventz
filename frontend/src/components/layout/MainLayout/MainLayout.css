@@ -6,9 +6,15 @@
 
 .main-layout-content {
   flex: 1;
-  margin-left: 260px; /* Ancho del sidebar */
+  margin-left: 260px; /* Ancho del sidebar expandido */
   min-height: 100vh;
   overflow-x: hidden;
+  transition: margin-left 0.3s ease;
+}
+
+/* Cuando el sidebar está colapsado */
+.main-layout.sidebar-collapsed .main-layout-content {
+  margin-left: 80px; /* Ancho del sidebar colapsado */
 }
 
 /* Responsive */
@@ -16,10 +22,18 @@
   .main-layout-content {
     margin-left: 220px;
   }
+
+  .main-layout.sidebar-collapsed .main-layout-content {
+    margin-left: 70px;
+  }
 }
 
 @media (max-width: 768px) {
   .main-layout-content {
+    margin-left: 0;
+  }
+
+  .main-layout.sidebar-collapsed .main-layout-content {
     margin-left: 0;
   }
 }

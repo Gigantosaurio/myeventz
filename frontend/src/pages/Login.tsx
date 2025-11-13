@@ -21,7 +21,8 @@ export const Login: React.FC = () => {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [rememberPassword, setRememberPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -83,6 +84,24 @@ export const Login: React.FC = () => {
     }
   };
 
+  const handleGuestMode = () => {
+    // Continuar como invitado - simplemente navegar al home sin autenticación
+    navigate('/home');
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotPasswordEmail.trim()) {
+      alert('Por favor, introduce tu nombre de usuario o correo electrónico');
+      return;
+    }
+
+    // Aquí iría la llamada a la API para recuperar contraseña
+    // Por ahora solo mostramos un mensaje
+    alert(`Se enviará un correo de recuperación a la cuenta asociada con: ${forgotPasswordEmail}`);
+    setShowForgotPassword(false);
+    setForgotPasswordEmail('');
+  };
+
   return (
     <AuthLayout>
       <Card className="login-card">
@@ -126,17 +145,16 @@ export const Login: React.FC = () => {
             disabled={isLoading}
           />
 
-          {/* Recordar contraseña */}
+          {/* Enlace recuperar contraseña */}
           <div className="login-options">
-            <label className="login-checkbox">
-              <input
-                type="checkbox"
-                checked={rememberPassword}
-                onChange={(e) => setRememberPassword(e.target.checked)}
-                disabled={isLoading}
-              />
-              <span>¿Has olvidado tu contraseña?</span>
-            </label>
+            <button
+              type="button"
+              className="login-forgot-password-link"
+              onClick={() => setShowForgotPassword(true)}
+              disabled={isLoading}
+            >
+              ¿Has olvidado tu contraseña?
+            </button>
           </div>
 
           {/* Botón de login */}
@@ -162,7 +180,51 @@ export const Login: React.FC = () => {
               Crear Una Nueva Cuenta
             </Button>
           </Link>
+
+          {/* Botón continuar como invitado */}
+          <Button
+            type="button"
+            variant="secondary"
+            size="lg"
+            fullWidth
+            onClick={handleGuestMode}
+            disabled={isLoading}
+          >
+            Continuar como invitado
+          </Button>
         </form>
+
+        {/* Modal de recuperar contraseña */}
+        {showForgotPassword && (
+          <div className="login-modal-overlay" onClick={() => setShowForgotPassword(false)}>
+            <div className="login-modal-content" onClick={(e) => e.stopPropagation()}>
+              <h2>Recuperar contraseña</h2>
+              <p>Introduce tu nombre de usuario o correo electrónico y te enviaremos instrucciones para recuperar tu contraseña.</p>
+              <Input
+                type="text"
+                placeholder="Usuario o correo electrónico"
+                value={forgotPasswordEmail}
+                onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                fullWidth
+                icon={<Mail size={20} />}
+              />
+              <div className="login-modal-actions">
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowForgotPassword(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleForgotPassword}
+                >
+                  Enviar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </Card>
     </AuthLayout>
   );

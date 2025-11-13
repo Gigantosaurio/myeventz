@@ -14,6 +14,7 @@ import {
   X
 } from 'lucide-react';
 import { eventService, authService } from '../services';
+import { getEventImageUrl, getProfileImageUrl } from '../utils/imageUtils';
 import type { EventDetail as EventDetailType } from '../types';
 import './EventDetail.css';
 
@@ -188,9 +189,9 @@ export const EventDetail: React.FC = () => {
         {/* Contenido */}
         <div className="event-detail-content">
           {/* Imagen principal */}
-          {event.imagen && (
+          {getEventImageUrl(event.imagen) && (
             <div className="event-detail-image">
-              <img src={event.imagen} alt={event.titulo} />
+              <img src={getEventImageUrl(event.imagen)!} alt={event.titulo} />
               <div className="event-detail-image-tags">
                 {event.categoria_nombre && (
                   <Tag color={event.categoria_color || '#7c3aed'} size="sm">
@@ -277,8 +278,8 @@ export const EventDetail: React.FC = () => {
                         onClick={() => navigate(`/profile/${participant.id_usuario}`)}
                       >
                         <div className="event-detail-participant-avatar">
-                          {participant.imagen_perfil ? (
-                            <img src={participant.imagen_perfil} alt={participant.nombre_completo} />
+                          {getProfileImageUrl(participant.imagen_perfil) ? (
+                            <img src={getProfileImageUrl(participant.imagen_perfil)!} alt={participant.nombre_completo} />
                           ) : (
                             <User size={16} />
                           )}
@@ -326,8 +327,8 @@ export const EventDetail: React.FC = () => {
                   onClick={() => navigate(`/profile/${event.organizador_id}`)}
                 >
                   <div className="event-detail-organizer-avatar">
-                    {event.organizador_imagen ? (
-                      <img src={event.organizador_imagen} alt={event.organizador_nombre} />
+                    {getProfileImageUrl(event.organizador_imagen) ? (
+                      <img src={getProfileImageUrl(event.organizador_imagen)!} alt={event.organizador_nombre} />
                     ) : (
                       <User size={24} />
                     )}
