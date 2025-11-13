@@ -1,56 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout/MainLayout';
 import { Input, Card } from '../components/common';
 import { Search, User } from 'lucide-react';
+import { userService } from '../services';
+import type { User as UserType } from '../types';
 import './UserSearch.css';
-
-interface UserProfile {
-  id: string;
-  username: string;
-  fullName: string;
-  profilePicture?: string;
-  bio?: string;
-}
-
-// TODO: Obtener usuarios desde la API
-// const users = await userService.searchUsers(query);
-const USERS: UserProfile[] = [
-  {
-    id: '1',
-    username: 'mangelrogel420',
-    fullName: 'Miguel Ángel Rogel Ruiz',
-    bio: 'Amante del deporte y la aventura',
-  },
-  {
-    id: '2',
-    username: 'gamibliblio',
-    fullName: 'Gabriel Milagro López',
-    bio: 'Me gusta la edición de vídeo, salir con los amigos...',
-  },
-  {
-    id: '3',
-    username: 'carlosguevara',
-    fullName: 'Carlos Fernández Guevara',
-  },
-  {
-    id: '4',
-    username: 'jorgealquezar',
-    fullName: 'Jorge Alquézar',
-  },
-];
 
 export const UserSearch: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [users, setUsers] = useState<UserType[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredUsers = USERS.filter(
-    (user) =>
-      user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.fullName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    const searchUsers = async () => {
+      if (!searchQuery.trim()) {
+        setUsers([]);
+        return;
+      }
 
-  const handleUserClick = (userId: string) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const results = await userService.searchUsers(searchQuery);
+        setUsers(results);
+      } catch (err) {
+        console.error('Error searching users:', err);
+        setError('Error al buscar usuarios');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(searchUsers, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]);
+
+  const handleUserClick = (userId: number) => {
     navigate(`/profile/${userId}`);
   };
 
@@ -78,35 +66,58 @@ export const UserSearch: React.FC = () => {
 
           {/* Lista de usuarios */}
           <div className="user-search-results">
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => (
+            {error && (
+              <div className="user-search-error">
+                <p>{error}</p>
+              </div>
+            )}
+
+            {isLoading && (
+              <div className="user-search-loading">
+                <p>Buscando usuarios...</p>
+              </div>
+            )}
+
+            {!isLoading && !error && searchQuery && users.length > 0 && (
+              users.map((user) => (
                 <Card
-                  key={user.id}
+                  key={user.id_usuario}
                   className="user-search-card"
                   hover
                   clickable
-                  onClick={() => handleUserClick(user.id)}
+                  onClick={() => handleUserClick(user.id_usuario)}
                 >
                   <div className="user-search-card-content">
                     <div className="user-search-avatar">
-                      {user.profilePicture ? (
-                        <img src={user.profilePicture} alt={user.username} />
+                      {user.imagen_perfil ? (
+                        <img src={user.imagen_perfil} alt={user.usuario} />
                       ) : (
                         <User size={24} />
                       )}
                     </div>
                     <div className="user-search-info">
-                      <h3 className="user-search-name">{user.fullName}</h3>
-                      <p className="user-search-username">@{user.username}</p>
+                      <h3 className="user-search-name">
+                        {user.nombre} {user.apel1} {user.apel2 || ''}
+                      </h3>
+                      <p className="user-search-username">@{user.usuario}</p>
                       {user.bio && <p className="user-search-bio">{user.bio}</p>}
                     </div>
                   </div>
                 </Card>
               ))
-            ) : (
+            )}
+
+            {!isLoading && !error && searchQuery && users.length === 0 && (
               <div className="user-search-empty">
                 <User size={48} />
-                <p>No se encontraron usuarios</p>
+                <p>No se encontraron usuarios con "{searchQuery}"</p>
+              </div>
+            )}
+
+            {!isLoading && !searchQuery && (
+              <div className="user-search-empty">
+                <Search size={48} />
+                <p>Escribe algo para buscar usuarios</p>
               </div>
             )}
           </div>

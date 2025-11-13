@@ -1,102 +1,157 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout/MainLayout';
 import { Button, Tag, Card } from '../components/common';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  MapPin, 
-  Users, 
-  Heart, 
+import {
+  ArrowLeft,
+  Calendar,
+  MapPin,
+  Users,
+  Heart,
   Share2,
   Clock,
   User,
   X
 } from 'lucide-react';
-import { colors } from '../styles/colors';
+import { eventService, authService } from '../services';
+import type { EventDetail as EventDetailType } from '../types';
 import './EventDetail.css';
 
-// TODO: Obtener evento desde la API
-// const event = await eventService.getEventById(eventId);
-const MOCK_EVENT = {
-  id: '1',
-  title: 'Sould Park Parkour Meet',
-  description: 'Evento llamando organizar una quedada de parkour en el parque de camas elásticas del CC La Torre Outlet.\n\nAnimamos a cualquiera que le guste el deporte a venir, conocer gente y disfrutar, sin importar experiencia ni en esta modalidad.',
-  imageUrl: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=1200',
-  category: 'Parkour',
-  categoryColor: colors.categories.escalada,
-  tags: ['Parkour', 'Deporte'],
-  dateTime: '29/02/2023 19:45',
-  ageRange: { min: 18, max: 25 },
-  location: {
-    name: 'Sould Park Jump CC La Torre Outlet Zaragoza',
-    address: 'CC La Torre Outlet, Zaragoza',
-    coordinates: { lat: 41.6488, lng: -0.8891 },
-  },
-  maxParticipants: 20,
-  currentParticipants: 5,
-  organizer: {
-    id: '1',
-    username: 'mangelrogel420',
-    fullName: 'Miguel Ángel Rogel Ruiz',
-    profilePicture: null,
-  },
-  participants: [
-    { id: '1', username: 'mangelrogel420', fullName: 'Miguel Ángel Rogel Ruiz' },
-    { id: '2', username: 'user2', fullName: 'Usuario 2' },
-    { id: '3', username: 'user3', fullName: 'Usuario 3' },
-    { id: '4', username: 'user4', fullName: 'Usuario 4' },
-    { id: '5', username: 'user5', fullName: 'Usuario 5' },
-  ],
-  likes: 24,
-  isLiked: false,
-  isParticipating: false,
-};
-
 export const EventDetail: React.FC = () => {
-  const { eventId } = useParams();
+  const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
-  
-  const [isLiked, setIsLiked] = useState(MOCK_EVENT.isLiked);
-  const [isParticipating, setIsParticipating] = useState(MOCK_EVENT.isParticipating);
-  const [likes, setLikes] = useState(MOCK_EVENT.likes);
+
+  const [event, setEvent] = useState<EventDetailType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isParticipating, setIsParticipating] = useState(false);
+  const [likes, setLikes] = useState(0);
+  const [participantsCount, setParticipantsCount] = useState(0);
+
+  const currentUser = authService.getStoredUser();
+
+  useEffect(() => {
+    const loadEvent = async () => {
+      if (!eventId) {
+        setError('ID de evento no válido');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const eventData = await eventService.getEventById(parseInt(eventId));
+        setEvent(eventData);
+        setIsLiked(!!eventData.liked_by_user);
+        setIsParticipating(!!eventData.is_participant);
+        setLikes(eventData.total_likes);
+        setParticipantsCount(eventData.participantes_actuales);
+      } catch (err) {
+        console.error('Error loading event:', err);
+        setError('Error al cargar el evento');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadEvent();
+  }, [eventId]);
 
   const handleBack = () => {
     navigate(-1);
   };
 
   const handleLike = async () => {
-    // TODO: Llamar al endpoint de like/unlike
-    // if (isLiked) {
-    //   await eventService.unlikeEvent(eventId);
-    // } else {
-    //   await eventService.likeEvent(eventId);
-    // }
-    
-    setIsLiked(!isLiked);
-    setLikes(isLiked ? likes - 1 : likes + 1);
+    if (!currentUser || !eventId) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      if (isLiked) {
+        await eventService.unlikeEvent(parseInt(eventId));
+        setIsLiked(false);
+        setLikes(likes - 1);
+      } else {
+        await eventService.likeEvent(parseInt(eventId));
+        setIsLiked(true);
+        setLikes(likes + 1);
+      }
+    } catch (err) {
+      console.error('Error toggling like:', err);
+      alert('Error al dar like al evento');
+    }
   };
 
   const handleParticipate = async () => {
-    // TODO: Llamar al endpoint de participar/cancelar
-    // if (isParticipating) {
-    //   await eventService.leaveEvent(eventId);
-    // } else {
-    //   await eventService.joinEvent(eventId);
-    // }
-    
-    setIsParticipating(!isParticipating);
+    if (!currentUser || !eventId) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      if (isParticipating) {
+        await eventService.leaveEvent(parseInt(eventId));
+        setIsParticipating(false);
+        setParticipantsCount(participantsCount - 1);
+      } else {
+        await eventService.joinEvent(parseInt(eventId));
+        setIsParticipating(true);
+        setParticipantsCount(participantsCount + 1);
+      }
+    } catch (err) {
+      console.error('Error toggling participation:', err);
+      alert('Error al participar en el evento');
+    }
   };
 
   const handleShare = () => {
-    // TODO: Implementar funcionalidad de compartir
-    // navigator.share({ title, text, url });
-    alert('Funcionalidad de compartir - Por implementar');
+    if (navigator.share && event) {
+      navigator
+        .share({
+          title: event.titulo,
+          text: event.descripcion,
+          url: window.location.href,
+        })
+        .catch((err) => console.error('Error sharing:', err));
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Enlace copiado al portapapeles');
+    }
   };
 
-  const handleParticipantClick = (userId: string) => {
-    navigate(`/profile/${userId}`);
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
+
+  const formatTime = (timeStr: string) => {
+    return timeStr.substring(0, 5);
+  };
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="event-detail-page">
+          <div className="event-detail-loading">Cargando evento...</div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error || !event) {
+    return (
+      <MainLayout>
+        <div className="event-detail-page">
+          <div className="event-detail-error">{error || 'Evento no encontrado'}</div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -133,15 +188,15 @@ export const EventDetail: React.FC = () => {
         {/* Contenido */}
         <div className="event-detail-content">
           {/* Imagen principal */}
-          {MOCK_EVENT.imageUrl && (
+          {event.imagen && (
             <div className="event-detail-image">
-              <img src={MOCK_EVENT.imageUrl} alt={MOCK_EVENT.title} />
+              <img src={event.imagen} alt={event.titulo} />
               <div className="event-detail-image-tags">
-                {MOCK_EVENT.tags.map((tag, index) => (
-                  <Tag key={index} color={MOCK_EVENT.categoryColor} size="sm">
-                    {tag}
+                {event.categoria_nombre && (
+                  <Tag color={event.categoria_color || '#7c3aed'} size="sm">
+                    {event.categoria_nombre}
                   </Tag>
-                ))}
+                )}
               </div>
             </div>
           )}
@@ -151,8 +206,8 @@ export const EventDetail: React.FC = () => {
             <div className="event-detail-main-left">
               {/* Título y descripción */}
               <Card className="event-detail-card">
-                <h2 className="event-detail-title">{MOCK_EVENT.title}</h2>
-                <p className="event-detail-description">{MOCK_EVENT.description}</p>
+                <h2 className="event-detail-title">{event.titulo}</h2>
+                <p className="event-detail-description">{event.descripcion}</p>
               </Card>
 
               {/* Detalles del evento */}
@@ -163,7 +218,9 @@ export const EventDetail: React.FC = () => {
                     <Calendar size={20} />
                     <div>
                       <span className="event-detail-info-label">Fecha y hora</span>
-                      <span className="event-detail-info-value">{MOCK_EVENT.dateTime}</span>
+                      <span className="event-detail-info-value">
+                        {formatDate(event.fecha)} {formatTime(event.hora)}
+                      </span>
                     </div>
                   </div>
 
@@ -172,7 +229,7 @@ export const EventDetail: React.FC = () => {
                     <div>
                       <span className="event-detail-info-label">Rango de edad</span>
                       <span className="event-detail-info-value">
-                        de {MOCK_EVENT.ageRange.min} a {MOCK_EVENT.ageRange.max} años
+                        de {event.edad_min} a {event.edad_max} años
                       </span>
                     </div>
                   </div>
@@ -181,21 +238,23 @@ export const EventDetail: React.FC = () => {
                     <MapPin size={20} />
                     <div>
                       <span className="event-detail-info-label">Ubicación</span>
-                      <span className="event-detail-info-value">{MOCK_EVENT.location.name}</span>
+                      <span className="event-detail-info-value">{event.ubicacion}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* TODO: Integrar mapa real (Google Maps, Mapbox, etc.) */}
-                <div className="event-detail-map">
-                  <div className="event-detail-map-placeholder">
-                    <MapPin size={32} />
-                    <p>Mapa de ubicación</p>
-                    <p className="event-detail-map-coords">
-                      {MOCK_EVENT.location.coordinates.lat}, {MOCK_EVENT.location.coordinates.lng}
-                    </p>
+                {/* Mapa placeholder */}
+                {event.lat && event.lng && (
+                  <div className="event-detail-map">
+                    <div className="event-detail-map-placeholder">
+                      <MapPin size={32} />
+                      <p>Mapa de ubicación</p>
+                      <p className="event-detail-map-coords">
+                        {event.lat}, {event.lng}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
               </Card>
             </div>
 
@@ -203,27 +262,15 @@ export const EventDetail: React.FC = () => {
               {/* Participantes */}
               <Card className="event-detail-card">
                 <div className="event-detail-participants-header">
-                  <h3>Participantes ({MOCK_EVENT.currentParticipants})</h3>
+                  <h3>Participantes</h3>
                   <span className="event-detail-participants-limit">
-                    {MOCK_EVENT.currentParticipants}/{MOCK_EVENT.maxParticipants}
+                    {participantsCount}/{event.max_participantes}
                   </span>
                 </div>
 
-                <div className="event-detail-participants-list">
-                  {MOCK_EVENT.participants.map((participant) => (
-                    <div
-                      key={participant.id}
-                      className="event-detail-participant"
-                      onClick={() => handleParticipantClick(participant.id)}
-                    >
-                      <div className="event-detail-participant-avatar">
-                        <User size={16} />
-                      </div>
-                      <span className="event-detail-participant-name">
-                        {participant.fullName}
-                      </span>
-                    </div>
-                  ))}
+                <div className="event-detail-participants-info">
+                  <Users size={32} />
+                  <p>{participantsCount} personas participando</p>
                 </div>
 
                 {/* Botón de participar */}
@@ -232,6 +279,7 @@ export const EventDetail: React.FC = () => {
                   size="lg"
                   fullWidth
                   onClick={handleParticipate}
+                  disabled={!currentUser}
                 >
                   {isParticipating ? (
                     <>
@@ -252,17 +300,21 @@ export const EventDetail: React.FC = () => {
                 <h3>Organizador</h3>
                 <div
                   className="event-detail-organizer"
-                  onClick={() => handleParticipantClick(MOCK_EVENT.organizer.id)}
+                  onClick={() => navigate(`/profile/${event.organizador_id}`)}
                 >
                   <div className="event-detail-organizer-avatar">
-                    <User size={24} />
+                    {event.organizador_imagen ? (
+                      <img src={event.organizador_imagen} alt={event.organizador_nombre} />
+                    ) : (
+                      <User size={24} />
+                    )}
                   </div>
                   <div className="event-detail-organizer-info">
                     <span className="event-detail-organizer-name">
-                      {MOCK_EVENT.organizer.fullName}
+                      {event.organizador_nombre}
                     </span>
                     <span className="event-detail-organizer-username">
-                      @{MOCK_EVENT.organizer.username}
+                      @{event.organizador_usuario}
                     </span>
                   </div>
                 </div>

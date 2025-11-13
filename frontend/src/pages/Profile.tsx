@@ -1,70 +1,78 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout/MainLayout';
 import { Card, Tag } from '../components/common';
 import { EventCard } from '../components/features/EventCard/EventCard';
 import { ArrowLeft, User, Edit } from 'lucide-react';
-import { colors } from '../styles/colors';
+import { userService, authService } from '../services';
+import type { UserProfile, EventDetail } from '../types';
 import './Profile.css';
-
-// TODO: Obtener perfil de usuario desde la API
-// const profile = await userService.getUserProfile(userId);
-const USER_PROFILE = {
-  id: '1',
-  username: 'mangelrogel420',
-  fullName: 'Miguel Ángel Rogel Ruiz',
-  bio: 'Me llama Miguel Ángel, aunque mis amigos me llaman Manolo. Me gusta mucho subir vídeos a YT y quedar con los amigos.',
-  hobbies: ['Videojuegos', 'Volleyball', 'Audiovisual', 'IA', 'Edición de vídeo', 'Editar', 'Parkour'],
-};
-
-// TODO: Obtener eventos del usuario desde la API
-// const userEvents = await eventService.getUserEvents(userId);
-const USER_EVENTS = [
-  {
-    id: '1',
-    title: 'Ruta Panticosa',
-    imageUrl: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800',
-    category: 'Ciclismo',
-    categoryColor: colors.categories.ciclismo,
-    date: '02/08/2023',
-    location: 'Panticosa',
-    participants: 5,
-  },
-];
-
-// TODO: Obtener participaciones del usuario desde la API
-// const userParticipations = await eventService.getUserParticipations(userId);
-const USER_PARTICIPATIONS = [
-  {
-    id: '2',
-    title: 'Festival De Cine ZGZ',
-    imageUrl: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800',
-    category: 'Audiovisual',
-    categoryColor: colors.categories.audiovisual,
-    date: '05/06/2023',
-    location: 'Cines Palafox',
-    participants: 24,
-  },
-  {
-    id: '3',
-    title: 'Bald Boss Party',
-    imageUrl: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800',
-    category: 'Cocina',
-    categoryColor: colors.categories.cocina,
-    date: '14/02/2023',
-    location: 'TBD',
-    participants: 8,
-  },
-];
 
 export const Profile: React.FC = () => {
   const navigate = useNavigate();
-  const { userId } = useParams();
-  
-  // TODO: Obtener usuario actual del contexto
-  // const currentUser = useAuth();
-  // const isOwnProfile = !userId || userId === currentUser.id;
-  const isOwnProfile = !userId || userId === '1';
+  const { userId: userIdParam } = useParams();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [organizedEvents, setOrganizedEvents] = useState<EventDetail[]>([]);
+  const [participatingEvents, setParticipatingEvents] = useState<EventDetail[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Determinar si es perfil propio
+  const currentUser = authService.getStoredUser();
+  const userId = userIdParam ? parseInt(userIdParam) : currentUser?.id_usuario;
+  const isOwnProfile = !userIdParam || (currentUser && userId === currentUser.id_usuario);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!userId) {
+        setError('Usuario no encontrado');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Cargar perfil y eventos en paralelo
+        const [profileData, eventsData] = await Promise.all([
+          userService.getUserById(userId),
+          userService.getAllUserEvents(userId)
+        ]);
+
+        setProfile(profileData);
+        setOrganizedEvents(eventsData.organized as EventDetail[]);
+        setParticipatingEvents(eventsData.participating as EventDetail[]);
+      } catch (err) {
+        console.error('Error loading profile:', err);
+        setError('Error al cargar el perfil');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [userId]);
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="profile-page">
+          <div className="profile-loading">Cargando perfil...</div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <MainLayout>
+        <div className="profile-page">
+          <div className="profile-error">{error || 'Perfil no encontrado'}</div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -98,59 +106,98 @@ export const Profile: React.FC = () => {
           <Card className="profile-card">
             <div className="profile-info">
               <div className="profile-avatar">
-                <User size={48} />
+                {profile.imagen_perfil ? (
+                  <img src={profile.imagen_perfil} alt={profile.nombre} />
+                ) : (
+                  <User size={48} />
+                )}
               </div>
               <div className="profile-details">
-                <h2 className="profile-name">{USER_PROFILE.fullName}</h2>
-                <p className="profile-username">@{USER_PROFILE.username}</p>
+                <h2 className="profile-name">
+                  {profile.nombre} {profile.apel1} {profile.apel2 || ''}
+                </h2>
+                <p className="profile-username">@{profile.usuario}</p>
               </div>
             </div>
 
             {/* Bio */}
-            <div className="profile-bio">
-              <h3>Biografía e intereses:</h3>
-              <p>{USER_PROFILE.bio}</p>
-            </div>
+            {profile.bio && (
+              <div className="profile-bio">
+                <h3>Biografía e intereses:</h3>
+                <p>{profile.bio}</p>
+              </div>
+            )}
 
             {/* Hobbies */}
-            <div className="profile-hobbies">
-              {USER_PROFILE.hobbies.map((hobby, index) => (
-                <Tag
-                  key={index}
-                  color={colors.categories[hobby.toLowerCase() as keyof typeof colors.categories] || colors.primary}
-                  size="sm"
-                >
-                  {hobby}
-                </Tag>
-              ))}
+            {profile.hobbies && profile.hobbies.length > 0 && (
+              <div className="profile-hobbies">
+                {profile.hobbies.map((hobby) => (
+                  <Tag key={hobby.id_categoria} color={hobby.color} size="sm">
+                    {hobby.categoria}
+                  </Tag>
+                ))}
+              </div>
+            )}
+
+            {/* Redes Sociales */}
+            <div className="profile-social">
+              <h3>Redes Sociales</h3>
+              {profile.ig || profile.fb || profile.x || profile.yt || profile.tt ? (
+                <div className="profile-social-links">
+                  {profile.ig && <p>Instagram: {profile.ig}</p>}
+                  {profile.fb && <p>Facebook: {profile.fb}</p>}
+                  {profile.x && <p>X (Twitter): {profile.x}</p>}
+                  {profile.yt && <p>YouTube: {profile.yt}</p>}
+                  {profile.tt && <p>TikTok: {profile.tt}</p>}
+                </div>
+              ) : (
+                <p className="profile-social-placeholder">No hay redes sociales añadidas</p>
+              )}
             </div>
 
-            {/* Redes Sociales (placeholder) */}
-            <div className="profile-social">
-              <h3>Mis Redes Sociales</h3>
-              <p className="profile-social-placeholder">No hay redes sociales añadidas</p>
+            {/* Estadísticas */}
+            <div className="profile-stats">
+              <div className="profile-stat">
+                <span className="profile-stat-value">{profile.eventos_organizados || 0}</span>
+                <span className="profile-stat-label">Eventos organizados</span>
+              </div>
+              <div className="profile-stat">
+                <span className="profile-stat-value">{profile.eventos_participando || 0}</span>
+                <span className="profile-stat-label">Participaciones</span>
+              </div>
             </div>
           </Card>
 
           {/* Mis eventos */}
-          <section className="profile-section">
-            <h2>Mis eventos:</h2>
-            <div className="profile-events-grid">
-              {USER_EVENTS.map((event) => (
-                <EventCard key={event.id} {...event} />
-              ))}
-            </div>
-          </section>
+          {organizedEvents.length > 0 && (
+            <section className="profile-section">
+              <h2>Mis eventos:</h2>
+              <div className="profile-events-grid">
+                {organizedEvents.map((event) => (
+                  <EventCard key={event.id_evento} event={event} />
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Participaciones */}
-          <section className="profile-section">
-            <h2>Participaciones:</h2>
-            <div className="profile-events-grid">
-              {USER_PARTICIPATIONS.map((event) => (
-                <EventCard key={event.id} {...event} />
-              ))}
+          {participatingEvents.length > 0 && (
+            <section className="profile-section">
+              <h2>Participaciones:</h2>
+              <div className="profile-events-grid">
+                {participatingEvents.map((event) => (
+                  <EventCard key={event.id_evento} event={event} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Sin eventos */}
+          {organizedEvents.length === 0 && participatingEvents.length === 0 && (
+            <div className="profile-empty">
+              <p>Este usuario aún no tiene eventos</p>
             </div>
-          </section>
+          )}
         </div>
       </div>
     </MainLayout>
