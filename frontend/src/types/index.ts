@@ -79,6 +79,16 @@ export interface Event {
   updated_at: string;
 }
 
+export interface EventParticipant {
+  id_usuario: number;
+  usuario: string;
+  nombre: string;
+  apel1: string;
+  apel2?: string;
+  nombre_completo: string;
+  imagen_perfil?: string;
+}
+
 export interface EventDetail extends Event {
   organizador_nombre: string;
   organizador_usuario: string;
@@ -90,6 +100,7 @@ export interface EventDetail extends Event {
   total_likes: number;
   is_participant?: boolean;
   liked_by_user?: boolean;
+  participantes?: EventParticipant[];
 }
 
 export interface CreateEventData {

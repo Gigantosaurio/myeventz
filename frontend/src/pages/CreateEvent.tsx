@@ -22,7 +22,6 @@ interface EventFormData {
 
 export const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
-  const currentUser = authService.getStoredUser();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -45,6 +44,8 @@ export const CreateEvent: React.FC = () => {
 
   useEffect(() => {
     const loadCategories = async () => {
+      const currentUser = authService.getStoredUser();
+
       if (!currentUser) {
         navigate('/login');
         return;
@@ -63,7 +64,7 @@ export const CreateEvent: React.FC = () => {
     };
 
     loadCategories();
-  }, [currentUser, navigate]);
+  }, [navigate]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

@@ -16,14 +16,16 @@ export const Profile: React.FC = () => {
   const [participatingEvents, setParticipatingEvents] = useState<EventDetail[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Determinar si es perfil propio
-  const currentUser = authService.getStoredUser();
-  const userId = userIdParam ? parseInt(userIdParam) : currentUser?.id_usuario;
-  const isOwnProfile = !userIdParam || (currentUser && userId === currentUser.id_usuario);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
+      // Determinar si es perfil propio
+      const currentUser = authService.getStoredUser();
+      const userId = userIdParam ? parseInt(userIdParam) : currentUser?.id_usuario;
+      const ownProfile = !userIdParam || (currentUser && userId === currentUser.id_usuario);
+      setIsOwnProfile(ownProfile);
+
       if (!userId) {
         setError('Usuario no encontrado');
         setIsLoading(false);
@@ -52,7 +54,7 @@ export const Profile: React.FC = () => {
     };
 
     loadProfile();
-  }, [userId]);
+  }, [userIdParam]);
 
   if (isLoading) {
     return (

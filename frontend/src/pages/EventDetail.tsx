@@ -262,16 +262,39 @@ export const EventDetail: React.FC = () => {
               {/* Participantes */}
               <Card className="event-detail-card">
                 <div className="event-detail-participants-header">
-                  <h3>Participantes</h3>
+                  <h3>Participantes ({participantsCount})</h3>
                   <span className="event-detail-participants-limit">
                     {participantsCount}/{event.max_participantes}
                   </span>
                 </div>
 
-                <div className="event-detail-participants-info">
-                  <Users size={32} />
-                  <p>{participantsCount} personas participando</p>
-                </div>
+                {event.participantes && event.participantes.length > 0 ? (
+                  <div className="event-detail-participants-list">
+                    {event.participantes.map((participant) => (
+                      <div
+                        key={participant.id_usuario}
+                        className="event-detail-participant"
+                        onClick={() => navigate(`/profile/${participant.id_usuario}`)}
+                      >
+                        <div className="event-detail-participant-avatar">
+                          {participant.imagen_perfil ? (
+                            <img src={participant.imagen_perfil} alt={participant.nombre_completo} />
+                          ) : (
+                            <User size={16} />
+                          )}
+                        </div>
+                        <span className="event-detail-participant-name">
+                          {participant.nombre_completo}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="event-detail-participants-empty">
+                    <Users size={32} />
+                    <p>Aún no hay participantes</p>
+                  </div>
+                )}
 
                 {/* Botón de participar */}
                 <Button
