@@ -1,86 +1,114 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout/MainLayout';
 import { Input, Button, Card, Tag } from '../components/common';
 import { ArrowLeft, User, Upload, X } from 'lucide-react';
-import { colors } from '../styles/colors';
+import { authService, userService, categoryService } from '../services';
+import type { Category, UserProfile, UpdateProfileData } from '../types';
 import './EditProfile.css';
 
-// TODO: Obtener hobbies/categorías disponibles desde la API
-// const availableHobbies = await categoryService.getAllCategories();
-const AVAILABLE_HOBBIES = [
-  'Audiovisual', 'Baloncesto', 'Calistenia', 'Ciclismo', 'Cocina', 
-  'Crossfit', 'Danza', 'Escalada', 'Esgrima', 'Fútbol', 
-  'Gimnasia', 'Golf', 'Karate', 'Motocross', 'Videojuegos', 
-  'Volleyball', 'IA', 'Edición de vídeo', 'Parkour'
-];
-
 interface ProfileFormData {
-  fullName: string;
-  username: string;
-  email: string;
+  nombre: string;
+  apel1: string;
+  apel2: string;
   bio: string;
-  hobbies: string[];
+  hobbies: number[];
   profilePicture: File | null;
-  socialNetworks: {
-    instagram: string;
-    twitter: string;
-    youtube: string;
-  };
+  ig: string;
+  fb: string;
+  x: string;
+  yt: string;
+  tt: string;
 }
 
 export const EditProfile: React.FC = () => {
   const navigate = useNavigate();
+  const currentUser = authService.getStoredUser();
+
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // TODO: Obtener datos del usuario actual desde la API
-  // const currentUser = await userService.getCurrentProfile();
   const [formData, setFormData] = useState<ProfileFormData>({
-    fullName: 'Miguel Ángel Rogel Ruiz',
-    username: 'mangelrogel420',
-    email: 'miguel@example.com',
-    bio: 'Me llama Miguel Ángel, aunque mis amigos me llaman Manolo. Me gusta mucho subir vídeos a YT y quedar con los amigos.',
-    hobbies: ['Videojuegos', 'Volleyball', 'Audiovisual', 'IA', 'Edición de vídeo', 'Parkour'],
+    nombre: '',
+    apel1: '',
+    apel2: '',
+    bio: '',
+    hobbies: [],
     profilePicture: null,
-    socialNetworks: {
-      instagram: '',
-      twitter: '',
-      youtube: '',
-    },
+    ig: '',
+    fb: '',
+    x: '',
+    yt: '',
+    tt: '',
   });
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (!currentUser) {
+        navigate('/login');
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const [profileData, categoriesData] = await Promise.all([
+          userService.getUserById(currentUser.id_usuario),
+          categoryService.getAllCategories(),
+        ]);
+
+        setProfile(profileData);
+        setCategories(categoriesData);
+
+        // Inicializar formulario con datos del perfil
+        setFormData({
+          nombre: profileData.nombre || '',
+          apel1: profileData.apel1 || '',
+          apel2: profileData.apel2 || '',
+          bio: profileData.bio || '',
+          hobbies: profileData.hobbies?.map((h) => h.id_categoria) || [],
+          profilePicture: null,
+          ig: profileData.ig || '',
+          fb: profileData.fb || '',
+          x: profileData.x || '',
+          yt: profileData.yt || '',
+          tt: profileData.tt || '',
+        });
+
+        if (profileData.imagen_perfil) {
+          setImagePreview(profileData.imagen_perfil);
+        }
+      } catch (err) {
+        console.error('Error loading profile:', err);
+        setError('Error al cargar el perfil');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [currentUser, navigate]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    
-    if (name.includes('.')) {
-      // Para redes sociales (socialNetworks.instagram)
-      const [parent, child] = name.split('.');
-      setFormData((prev) => ({
-        ...prev,
-        [parent]: {
-          ...(prev[parent as keyof typeof prev] as any),
-          [child]: value,
-        },
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
-  };
-
-  const handleHobbyToggle = (hobby: string) => {
     setFormData((prev) => ({
       ...prev,
-      hobbies: prev.hobbies.includes(hobby)
-        ? prev.hobbies.filter((h) => h !== hobby)
-        : [...prev.hobbies, hobby],
+      [name]: value,
+    }));
+  };
+
+  const handleHobbyToggle = (hobbyId: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      hobbies: prev.hobbies.includes(hobbyId)
+        ? prev.hobbies.filter((id) => id !== hobbyId)
+        : [...prev.hobbies, hobbyId],
     }));
   };
 
@@ -114,16 +142,12 @@ export const EditProfile: React.FC = () => {
   };
 
   const validateForm = (): boolean => {
-    if (!formData.fullName.trim()) {
-      setError('El nombre completo es obligatorio');
+    if (!formData.nombre.trim()) {
+      setError('El nombre es obligatorio');
       return false;
     }
-    if (!formData.username.trim()) {
-      setError('El nombre de usuario es obligatorio');
-      return false;
-    }
-    if (!formData.email.trim()) {
-      setError('El email es obligatorio');
+    if (!formData.apel1.trim()) {
+      setError('El primer apellido es obligatorio');
       return false;
     }
     if (formData.hobbies.length === 0) {
@@ -138,36 +162,35 @@ export const EditProfile: React.FC = () => {
     setError(null);
     setSuccess(false);
 
-    if (!validateForm()) {
+    if (!validateForm() || !currentUser) {
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // TODO: Enviar datos al backend
-      // const formDataToSend = new FormData();
-      // formDataToSend.append('fullName', formData.fullName);
-      // formDataToSend.append('username', formData.username);
-      // formDataToSend.append('email', formData.email);
-      // formDataToSend.append('bio', formData.bio);
-      // formDataToSend.append('hobbies', JSON.stringify(formData.hobbies));
-      // formDataToSend.append('socialNetworks', JSON.stringify(formData.socialNetworks));
-      // if (formData.profilePicture) {
-      //   formDataToSend.append('profilePicture', formData.profilePicture);
-      // }
-      // 
-      // const response = await userService.updateProfile(formDataToSend);
-      // localStorage.setItem('user', JSON.stringify(response));
+      const updateData: UpdateProfileData = {
+        nombre: formData.nombre,
+        apel1: formData.apel1,
+        apel2: formData.apel2 || undefined,
+        bio: formData.bio || undefined,
+        hobbies: formData.hobbies,
+        ig: formData.ig || undefined,
+        fb: formData.fb || undefined,
+        x: formData.x || undefined,
+        yt: formData.yt || undefined,
+        tt: formData.tt || undefined,
+        imagen_perfil: formData.profilePicture || undefined,
+      };
 
-      // Simulación de actualización exitosa
+      await userService.updateUser(currentUser.id_usuario, updateData);
+      setSuccess(true);
+
       setTimeout(() => {
-        setSuccess(true);
-        setTimeout(() => {
-          navigate('/profile');
-        }, 1500);
-      }, 1000);
+        navigate('/profile');
+      }, 1500);
     } catch (err) {
+      console.error('Error updating profile:', err);
       setError('Error al actualizar el perfil. Por favor, inténtalo de nuevo.');
       setIsSubmitting(false);
     }
@@ -176,6 +199,16 @@ export const EditProfile: React.FC = () => {
   const handleBack = () => {
     navigate('/profile');
   };
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="edit-profile-page">
+          <div className="edit-profile-loading">Cargando perfil...</div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -248,32 +281,31 @@ export const EditProfile: React.FC = () => {
               <h2>Información básica</h2>
               <Input
                 type="text"
-                name="fullName"
-                label="Nombre completo"
-                placeholder="Tu nombre completo"
-                value={formData.fullName}
+                name="nombre"
+                label="Nombre"
+                placeholder="Tu nombre"
+                value={formData.nombre}
                 onChange={handleInputChange}
                 required
                 fullWidth
               />
               <Input
                 type="text"
-                name="username"
-                label="Nombre de usuario"
-                placeholder="tunombredeusuario"
-                value={formData.username}
+                name="apel1"
+                label="Primer apellido"
+                placeholder="Tu primer apellido"
+                value={formData.apel1}
                 onChange={handleInputChange}
                 required
                 fullWidth
               />
               <Input
-                type="email"
-                name="email"
-                label="Email"
-                placeholder="tu@email.com"
-                value={formData.email}
+                type="text"
+                name="apel2"
+                label="Segundo apellido (opcional)"
+                placeholder="Tu segundo apellido"
+                value={formData.apel2}
                 onChange={handleInputChange}
-                required
                 fullWidth
               />
             </Card>
@@ -304,14 +336,14 @@ export const EditProfile: React.FC = () => {
                 Selecciona tus hobbies (al menos uno)
               </p>
               <div className="edit-profile-hobbies">
-                {AVAILABLE_HOBBIES.map((hobby) => (
+                {categories.map((category) => (
                   <Tag
-                    key={hobby}
-                    color={colors.categories[hobby.toLowerCase() as keyof typeof colors.categories] || colors.primary}
-                    selected={formData.hobbies.includes(hobby)}
-                    onClick={() => handleHobbyToggle(hobby)}
+                    key={category.id_categoria}
+                    color={category.color}
+                    selected={formData.hobbies.includes(category.id_categoria)}
+                    onClick={() => handleHobbyToggle(category.id_categoria)}
                   >
-                    {hobby}
+                    {category.categoria}
                   </Tag>
                 ))}
               </div>
@@ -322,28 +354,46 @@ export const EditProfile: React.FC = () => {
               <h2>Redes sociales (opcional)</h2>
               <Input
                 type="text"
-                name="socialNetworks.instagram"
+                name="ig"
                 label="Instagram"
                 placeholder="@tuusuario"
-                value={formData.socialNetworks.instagram}
+                value={formData.ig}
                 onChange={handleInputChange}
                 fullWidth
               />
               <Input
                 type="text"
-                name="socialNetworks.twitter"
-                label="Twitter/X"
+                name="fb"
+                label="Facebook"
                 placeholder="@tuusuario"
-                value={formData.socialNetworks.twitter}
+                value={formData.fb}
                 onChange={handleInputChange}
                 fullWidth
               />
               <Input
                 type="text"
-                name="socialNetworks.youtube"
+                name="x"
+                label="X (Twitter)"
+                placeholder="@tuusuario"
+                value={formData.x}
+                onChange={handleInputChange}
+                fullWidth
+              />
+              <Input
+                type="text"
+                name="yt"
                 label="YouTube"
                 placeholder="Tu canal"
-                value={formData.socialNetworks.youtube}
+                value={formData.yt}
+                onChange={handleInputChange}
+                fullWidth
+              />
+              <Input
+                type="text"
+                name="tt"
+                label="TikTok"
+                placeholder="@tuusuario"
+                value={formData.tt}
                 onChange={handleInputChange}
                 fullWidth
               />

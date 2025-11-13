@@ -1,61 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout/MainLayout';
 import { Input, Button, Card, Tag } from '../components/common';
 import { ArrowLeft, Upload, X } from 'lucide-react';
-import { colors } from '../styles/colors';
+import { eventService, categoryService, authService } from '../services';
+import type { Category, CreateEventData } from '../types';
 import './CreateEvent.css';
 
-// TODO: Obtener categorías desde la API
-// const categories = await categoryService.getAllCategories();
-const CATEGORIES = [
-  { name: 'Audiovisual', color: colors.categories.audiovisual },
-  { name: 'Baloncesto', color: colors.categories.baloncesto },
-  { name: 'Calistenia', color: colors.categories.calistenia },
-  { name: 'Ciclismo', color: colors.categories.ciclismo },
-  { name: 'Cocina', color: colors.categories.cocina },
-  { name: 'Crossfit', color: colors.categories.crossfit },
-  { name: 'Danza', color: colors.categories.danza },
-  { name: 'Escalada', color: colors.categories.escalada },
-  { name: 'Esgrima', color: colors.categories.esgrima },
-  { name: 'Fútbol', color: colors.categories.futbol },
-  { name: 'Gimnasia', color: colors.categories.gimnasia },
-  { name: 'Golf', color: colors.categories.golf },
-  { name: 'Karate', color: colors.categories.karate },
-  { name: 'Motocross', color: colors.categories.motocross },
-];
-
 interface EventFormData {
-  title: string;
-  description: string;
-  category: string;
-  date: string;
-  time: string;
-  minAge: string;
-  maxAge: string;
-  location: string;
-  maxParticipants: string;
-  image: File | null;
+  titulo: string;
+  descripcion: string;
+  id_categoria: number | null;
+  fecha: string;
+  hora: string;
+  edad_min: string;
+  edad_max: string;
+  ubicacion: string;
+  max_participantes: string;
+  imagen: File | null;
 }
 
 export const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
+  const currentUser = authService.getStoredUser();
+
+  const [categories, setCategories] = useState<Category[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<EventFormData>({
-    title: '',
-    description: '',
-    category: '',
-    date: '',
-    time: '',
-    minAge: '18',
-    maxAge: '99',
-    location: '',
-    maxParticipants: '10',
-    image: null,
+    titulo: '',
+    descripcion: '',
+    id_categoria: null,
+    fecha: '',
+    hora: '',
+    edad_min: '18',
+    edad_max: '99',
+    ubicacion: '',
+    max_participantes: '10',
+    imagen: null,
   });
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      if (!currentUser) {
+        navigate('/login');
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const categoriesData = await categoryService.getAllCategories();
+        setCategories(categoriesData);
+      } catch (err) {
+        console.error('Error loading categories:', err);
+        setError('Error al cargar las categorías');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCategories();
+  }, [currentUser, navigate]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -67,10 +75,10 @@ export const CreateEvent: React.FC = () => {
     }));
   };
 
-  const handleCategorySelect = (categoryName: string) => {
+  const handleCategorySelect = (categoryId: number) => {
     setFormData((prev) => ({
       ...prev,
-      category: categoryName,
+      id_categoria: categoryId,
     }));
   };
 
@@ -107,39 +115,39 @@ export const CreateEvent: React.FC = () => {
   };
 
   const validateForm = (): boolean => {
-    if (!formData.title.trim()) {
+    if (!formData.titulo.trim()) {
       setError('El título es obligatorio');
       return false;
     }
-    if (!formData.description.trim()) {
+    if (!formData.descripcion.trim()) {
       setError('La descripción es obligatoria');
       return false;
     }
-    if (!formData.category) {
+    if (!formData.id_categoria) {
       setError('Selecciona una categoría');
       return false;
     }
-    if (!formData.date) {
+    if (!formData.fecha) {
       setError('La fecha es obligatoria');
       return false;
     }
-    if (!formData.time) {
+    if (!formData.hora) {
       setError('La hora es obligatoria');
       return false;
     }
-    if (!formData.location.trim()) {
+    if (!formData.ubicacion.trim()) {
       setError('La ubicación es obligatoria');
       return false;
     }
 
-    const minAge = parseInt(formData.minAge);
-    const maxAge = parseInt(formData.maxAge);
+    const minAge = parseInt(formData.edad_min);
+    const maxAge = parseInt(formData.edad_max);
     if (minAge < 0 || maxAge < 0 || minAge > maxAge) {
       setError('Rango de edad inválido');
       return false;
     }
 
-    const maxPart = parseInt(formData.maxParticipants);
+    const maxPart = parseInt(formData.max_participantes);
     if (maxPart < 1) {
       setError('Debe haber al menos 1 participante');
       return false;
@@ -152,37 +160,30 @@ export const CreateEvent: React.FC = () => {
     e.preventDefault();
     setError(null);
 
-    if (!validateForm()) {
+    if (!validateForm() || !formData.id_categoria) {
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // TODO: Enviar datos al backend
-      // const formDataToSend = new FormData();
-      // formDataToSend.append('title', formData.title);
-      // formDataToSend.append('description', formData.description);
-      // formDataToSend.append('category', formData.category);
-      // formDataToSend.append('date', formData.date);
-      // formDataToSend.append('time', formData.time);
-      // formDataToSend.append('minAge', formData.minAge);
-      // formDataToSend.append('maxAge', formData.maxAge);
-      // formDataToSend.append('location', formData.location);
-      // formDataToSend.append('maxParticipants', formData.maxParticipants);
-      // if (formData.image) {
-      //   formDataToSend.append('image', formData.image);
-      // }
-      // 
-      // const response = await eventService.createEvent(formDataToSend);
-      // navigate(`/event/${response.id}`);
+      const eventData: CreateEventData = {
+        titulo: formData.titulo,
+        descripcion: formData.descripcion,
+        fecha: formData.fecha,
+        hora: formData.hora,
+        edad_min: parseInt(formData.edad_min),
+        edad_max: parseInt(formData.edad_max),
+        ubicacion: formData.ubicacion,
+        max_participantes: parseInt(formData.max_participantes),
+        id_categoria: formData.id_categoria,
+        imagen: formData.imagen || undefined,
+      };
 
-      // Simulación de creación exitosa
-      setTimeout(() => {
-        alert('¡Evento creado exitosamente!');
-        navigate('/home');
-      }, 1000);
+      const newEvent = await eventService.createEvent(eventData);
+      navigate(`/event/${newEvent.id_evento}`);
     } catch (err) {
+      console.error('Error creating event:', err);
       setError('Error al crear el evento. Por favor, inténtalo de nuevo.');
       setIsSubmitting(false);
     }
@@ -191,6 +192,16 @@ export const CreateEvent: React.FC = () => {
   const handleBack = () => {
     navigate(-1);
   };
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="create-event-page">
+          <div className="create-event-loading">Cargando categorías...</div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -216,10 +227,10 @@ export const CreateEvent: React.FC = () => {
               <h2>Información básica</h2>
               <Input
                 type="text"
-                name="title"
+                name="titulo"
                 label="Título del evento"
                 placeholder="Ej: Partido de fútbol en Parque Grande"
-                value={formData.title}
+                value={formData.titulo}
                 onChange={handleInputChange}
                 required
                 fullWidth
@@ -228,10 +239,10 @@ export const CreateEvent: React.FC = () => {
               <div className="create-event-textarea-wrapper">
                 <label className="create-event-label">Descripción</label>
                 <textarea
-                  name="description"
+                  name="descripcion"
                   className="create-event-textarea"
                   placeholder="Describe tu evento..."
-                  value={formData.description}
+                  value={formData.descripcion}
                   onChange={handleInputChange}
                   rows={6}
                   required
@@ -243,14 +254,14 @@ export const CreateEvent: React.FC = () => {
             <Card className="create-event-section">
               <h2>Categoría</h2>
               <div className="create-event-categories">
-                {CATEGORIES.map((category) => (
+                {categories.map((category) => (
                   <Tag
-                    key={category.name}
+                    key={category.id_categoria}
                     color={category.color}
-                    selected={formData.category === category.name}
-                    onClick={() => handleCategorySelect(category.name)}
+                    selected={formData.id_categoria === category.id_categoria}
+                    onClick={() => handleCategorySelect(category.id_categoria)}
                   >
-                    {category.name}
+                    {category.categoria}
                   </Tag>
                 ))}
               </div>
@@ -262,18 +273,18 @@ export const CreateEvent: React.FC = () => {
               <div className="create-event-row">
                 <Input
                   type="date"
-                  name="date"
+                  name="fecha"
                   label="Fecha"
-                  value={formData.date}
+                  value={formData.fecha}
                   onChange={handleInputChange}
                   required
                   fullWidth
                 />
                 <Input
                   type="time"
-                  name="time"
+                  name="hora"
                   label="Hora"
-                  value={formData.time}
+                  value={formData.hora}
                   onChange={handleInputChange}
                   required
                   fullWidth
@@ -287,9 +298,9 @@ export const CreateEvent: React.FC = () => {
               <div className="create-event-row">
                 <Input
                   type="number"
-                  name="minAge"
+                  name="edad_min"
                   label="Edad mínima"
-                  value={formData.minAge}
+                  value={formData.edad_min}
                   onChange={handleInputChange}
                   min="0"
                   required
@@ -297,9 +308,9 @@ export const CreateEvent: React.FC = () => {
                 />
                 <Input
                   type="number"
-                  name="maxAge"
+                  name="edad_max"
                   label="Edad máxima"
-                  value={formData.maxAge}
+                  value={formData.edad_max}
                   onChange={handleInputChange}
                   min="0"
                   required
@@ -313,19 +324,19 @@ export const CreateEvent: React.FC = () => {
               <h2>Ubicación y participantes</h2>
               <Input
                 type="text"
-                name="location"
+                name="ubicacion"
                 label="Ubicación"
                 placeholder="Ej: Parque Grande José Antonio Labordeta"
-                value={formData.location}
+                value={formData.ubicacion}
                 onChange={handleInputChange}
                 required
                 fullWidth
               />
               <Input
                 type="number"
-                name="maxParticipants"
+                name="max_participantes"
                 label="Número máximo de participantes"
-                value={formData.maxParticipants}
+                value={formData.max_participantes}
                 onChange={handleInputChange}
                 min="1"
                 required
