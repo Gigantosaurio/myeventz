@@ -1,0 +1,321 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    MyEventz - GUÍA RÁPIDA DE REFERENCIA                      ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📊 ESTADO DEL PROYECTO                                                      ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+Frontend:    ✅ 100% COMPLETO (11 pantallas React + TypeScript)
+Base Datos:  ✅ 100% COMPLETO (MySQL con 7 tablas + datos de prueba)
+Backend:     ❌ 0% PENDIENTE (Node.js + Express + TypeScript)
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🗄️ TABLAS DE LA BASE DE DATOS                                              ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+1. usuarios              - Usuarios del sistema
+2. categorias            - Categorías de eventos (50 en total)
+3. eventos               - Eventos creados
+4. participantes_eventos - Relación usuarios ↔ eventos (participación)
+5. eventos_likes         - Likes en eventos
+6. usuarios_hobbies      - Hobbies de usuarios (relación con categorías)
+7. eventos_categorias    - Categorías de eventos (actualmente 1 por evento)
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🔑 CAMPOS CLAVE: BD → FRONTEND                                              ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+USUARIOS:
+  id_usuario        → id
+  usuario           → username
+  clave             → password (solo en auth)
+  nombre            → firstName
+  apel1             → lastName1
+  apel2             → lastName2
+  f_nac             → birthDate
+  imagen_perfil     → profilePicture
+
+EVENTOS:
+  id_evento         → id
+  titulo            → title
+  descripcion       → description
+  ubicacion         → location
+  lat, lng          → lat, lng
+  max_participantes → maxParticipants
+
+CATEGORÍAS:
+  id_categoria      → id
+  categoria         → name
+  color             → color (hex)
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🔌 ENDPOINTS BACKEND (TODOS LOS NECESARIOS)                                 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+AUTENTICACIÓN:
+  POST   /api/auth/register     - Registrar usuario + hobbies
+  POST   /api/auth/login        - Login con JWT
+  GET    /api/auth/me           - Usuario actual (requiere token)
+  POST   /api/auth/logout       - Logout
+
+USUARIOS:
+  GET    /api/users              - Buscar usuarios (?search=texto)
+  GET    /api/users/:id          - Perfil de usuario + eventos + hobbies
+  PUT    /api/users/:id          - Actualizar perfil (multipart/form-data)
+  GET    /api/users/:id/events   - Eventos organizados
+  GET    /api/users/:id/participations - Eventos participando
+
+EVENTOS:
+  GET    /api/events             - Listar eventos (?fecha=, ?categoria=)
+  GET    /api/events/popular     - Eventos populares (?limit=10)
+  GET    /api/events/recent      - Publicaciones recientes (?limit=20)
+  GET    /api/events/search      - Buscar (?search=texto&categories=1,2,3)
+  GET    /api/events/:id         - Detalle evento completo
+  POST   /api/events             - Crear evento (multipart/form-data)
+  PUT    /api/events/:id         - Actualizar evento
+  DELETE /api/events/:id         - Eliminar evento
+  POST   /api/events/:id/join    - Unirse al evento
+  DELETE /api/events/:id/leave   - Salir del evento
+  POST   /api/events/:id/like    - Like al evento
+  DELETE /api/events/:id/unlike  - Quitar like
+
+BÚSQUEDA:
+  GET    /api/search             - Búsqueda mixta (?q=query&type=all/users/events)
+
+CATEGORÍAS:
+  GET    /api/categories         - Listar todas las categorías
+  GET    /api/categories/:id/events - Eventos de una categoría
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📦 TECNOLOGÍAS BACKEND                                                      ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+OBLIGATORIAS:
+  ✅ Node.js v18+
+  ✅ Express
+  ✅ TypeScript
+  ✅ mysql2 (NO ORM - queries directas)
+  ✅ jsonwebtoken (JWT)
+  ✅ bcryptjs (hash passwords)
+  ✅ multer (upload imágenes)
+  ✅ cors
+  ✅ dotenv
+  ✅ express-validator
+
+PROHIBIDAS:
+  ❌ Sequelize
+  ❌ TypeORM
+  ❌ Prisma
+  ❌ Mongoose
+
+OPCIONALES:
+  📦 morgan (logger)
+  📦 helmet (seguridad)
+  📦 compression
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🏗️ ESTRUCTURA BACKEND                                                       ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+backend/
+├── src/
+│   ├── config/
+│   │   ├── database.ts           # mysql2.createPool()
+│   │   └── env.ts
+│   ├── models/
+│   │   ├── userModel.ts          # Queries directas SQL
+│   │   ├── eventModel.ts
+│   │   └── categoryModel.ts
+│   ├── controllers/
+│   │   ├── authController.ts     # register, login, me
+│   │   ├── userController.ts
+│   │   ├── eventController.ts
+│   │   ├── searchController.ts
+│   │   └── categoryController.ts
+│   ├── routes/
+│   │   ├── auth.ts
+│   │   ├── users.ts
+│   │   ├── events.ts
+│   │   ├── search.ts
+│   │   └── categories.ts
+│   ├── middleware/
+│   │   ├── auth.ts               # Verificar JWT
+│   │   ├── upload.ts             # Multer config
+│   │   └── errorHandler.ts
+│   ├── utils/
+│   │   ├── jwt.ts
+│   │   └── bcrypt.ts
+│   └── app.ts
+├── uploads/                      # .gitignore
+├── .env                          # .gitignore
+├── .env.example
+├── package.json
+└── tsconfig.json
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🔐 VARIABLES DE ENTORNO (.env)                                              ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+NODE_ENV=development
+PORT=3000
+
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=myeventz
+
+JWT_SECRET=cambiar_en_produccion_super_secreto_largo
+JWT_EXPIRES_IN=7d
+
+CORS_ORIGIN=http://localhost:5173
+
+UPLOAD_MAX_SIZE=5242880
+UPLOAD_DIR=uploads
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🎯 PRIORIDADES DE DESARROLLO                                                ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+FASE 1 - Setup + Autenticación (CRÍTICO):
+  1. npm init + tsconfig + express
+  2. Conexión MySQL con mysql2
+  3. POST /api/auth/register (bcrypt + JWT)
+  4. POST /api/auth/login (JWT)
+  5. GET /api/auth/me (middleware auth)
+
+FASE 2 - Eventos Básicos:
+  6. GET /api/events/popular
+  7. GET /api/events/recent
+  8. GET /api/events/:id
+  9. POST /api/events (con imagen)
+
+FASE 3 - Participación:
+  10. POST /api/events/:id/join
+  11. DELETE /api/events/:id/leave
+  12. POST /api/events/:id/like
+  13. DELETE /api/events/:id/unlike
+
+FASE 4 - Búsqueda y Perfil:
+  14. GET /api/events/search
+  15. GET /api/search (mixta)
+  16. GET /api/users/:id
+  17. PUT /api/users/:id (con imagen)
+
+FASE 5 - Categorías:
+  18. GET /api/categories
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 💾 DATOS DE PRUEBA                                                          ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+USUARIOS (todos con password "123"):
+  gamiluu
+  charly
+  gigantosaurio
+  carver
+  mangelrogel420
+
+CATEGORÍAS PRINCIPALES (50 total):
+  Fútbol, Baloncesto, Ciclismo, Escalada, Gimnasia, Golf, Esgrima,
+  Karate, Crossfit, Danza, Calistenia, Motocross, Cocina, Audiovisual...
+
+EVENTOS: 8 eventos de prueba con diferentes categorías
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📝 EJEMPLO DE QUERY (NO ORM)                                                ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+// config/database.ts
+import mysql from 'mysql2/promise';
+
+export const dbPool = mysql.createPool({
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+});
+
+// models/userModel.ts
+export const findUserByUsername = async (usuario: string) => {
+  const [rows] = await dbPool.execute(
+    'SELECT * FROM usuarios WHERE usuario = ?',
+    [usuario]
+  );
+  return rows[0];
+};
+
+// controllers/authController.ts
+export const login = async (req, res) => {
+  const { usuario, clave } = req.body;
+  
+  const user = await findUserByUsername(usuario);
+  if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+  
+  const isValid = await bcrypt.compare(clave, user.clave);
+  if (!isValid) return res.status(401).json({ error: 'Invalid credentials' });
+  
+  const token = jwt.sign({ id: user.id_usuario }, process.env.JWT_SECRET);
+  
+  res.json({ token, user: { ...user, clave: undefined } });
+};
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ⚠️ REGLAS CRÍTICAS                                                          ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+✅ SIEMPRE usar placeholders (?) en queries SQL
+✅ SIEMPRE hashear passwords con bcrypt
+✅ SIEMPRE verificar JWT en rutas protegidas
+✅ SIEMPRE validar inputs con express-validator
+✅ SIEMPRE usar multipart/form-data para imágenes
+
+❌ NUNCA concatenar strings en SQL
+❌ NUNCA guardar passwords en texto plano
+❌ NUNCA devolver el campo "clave" en las respuestas
+❌ NUNCA confiar en datos del frontend sin validar
+❌ NUNCA usar ORM (Sequelize, TypeORM, Prisma)
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🚀 COMANDOS RÁPIDOS                                                         ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+# Setup inicial
+npm init -y
+npm install express typescript @types/node @types/express ts-node nodemon
+npm install mysql2 jsonwebtoken bcryptjs multer cors dotenv express-validator
+npm install --save-dev @types/jsonwebtoken @types/bcryptjs @types/multer @types/cors
+
+# Crear tsconfig.json
+npx tsc --init
+
+# Importar base de datos
+mysql -u root -p myeventz < MyEventz_Completo_Actualizado.sql
+
+# Desarrollo
+npm run dev
+
+# Verificar conexión MySQL
+mysql -u root -p
+USE myeventz;
+SHOW TABLES;
+SELECT COUNT(*) FROM usuarios;
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📚 ARCHIVOS NECESARIOS PARA SIGUIENTE CHAT                                  ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+1. MyEventz_Completo_Actualizado.sql    - Script SQL completo
+2. Diagrama_BD.png                       - Imagen del esquema
+3. RESUMEN_COMPLETO_PROYECTO.md          - Documentación exhaustiva
+4. CHEAT_SHEET.txt                       - Este archivo
+
+═══════════════════════════════════════════════════════════════════════════════
+
+                      ¡LISTO PARA EMPEZAR EL BACKEND! 🚀
+
+═══════════════════════════════════════════════════════════════════════════════

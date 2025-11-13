@@ -1,0 +1,126 @@
+.register-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Indicador de pasos */
+.register-steps {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.register-step {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  color: var(--text-secondary);
+  font-weight: 600;
+  transition: all var(--transition-normal);
+}
+
+.register-step.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--text-primary);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+}
+
+/* Formulario */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.register-step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-height: 300px;
+}
+
+/* Fila de nombres (Paso 2) */
+.register-name-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Hobbies (Paso 3) */
+.register-hobbies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.register-hobbies-count {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  background: rgba(124, 58, 237, 0.1);
+  border-radius: var(--radius-md);
+}
+
+/* Error de hobbies */
+.register-error-text {
+  text-align: center;
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-lg);
+  color: #fca5a5;
+  font-size: 0.875rem;
+}
+
+/* Acciones */
+.register-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.register-actions button:first-child:not(:only-child) {
+  flex: 0 0 auto;
+}
+
+.register-actions button:last-child:not(:only-child) {
+  flex: 1;
+}
+
+/* Link a login */
+.register-login-link {
+  text-decoration: none;
+  display: block;
+  margin-top: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .register-name-row {
+    grid-template-columns: 1fr;
+  }
+
+  .register-step-content {
+    min-height: 250px;
+  }
+
+  .register-steps {
+    gap: 0.75rem;
+  }
+
+  .register-step {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.875rem;
+  }
+}

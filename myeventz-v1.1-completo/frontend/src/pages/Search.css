@@ -1,0 +1,264 @@
+.search-page {
+  min-height: 100vh;
+  background: var(--bg-main);
+}
+
+/* Header */
+.search-header {
+  padding: 1.5rem 2rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.search-header h1 {
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Contenido */
+.search-content {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.search-input-wrapper {
+  margin-bottom: 1.5rem;
+}
+
+/* Tabs */
+.search-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.search-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  margin-bottom: -2px;
+}
+
+.search-tab:hover {
+  color: var(--text-primary);
+  background: rgba(124, 58, 237, 0.05);
+}
+
+.search-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* Empty state */
+.search-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.search-empty-state svg {
+  color: var(--primary);
+  opacity: 0.3;
+}
+
+.search-empty-state h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.search-empty-state p {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 400px;
+}
+
+/* Resultados */
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.search-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.search-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.search-section-title svg {
+  color: var(--primary);
+}
+
+/* Lista de usuarios */
+.search-users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.search-user-card {
+  padding: 1rem;
+}
+
+.search-user-card > div {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.search-user-avatar {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.search-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.search-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-user-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-user-username {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.375rem 0;
+}
+
+.search-user-bio {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Grid de eventos */
+.search-events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .search-header {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .search-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .search-content {
+    padding: 1.5rem;
+  }
+
+  .search-tabs {
+    gap: 0.25rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .search-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .search-tab {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+
+  .search-user-avatar {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .search-events-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .search-header {
+    padding: 1rem;
+  }
+
+  .search-content {
+    padding: 1rem;
+  }
+
+  .search-empty-state {
+    padding: 3rem 1rem;
+  }
+
+  .search-empty-state svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .search-empty-state h3 {
+    font-size: 1.125rem;
+  }
+
+  .search-section-title {
+    font-size: 1.125rem;
+  }
+}
