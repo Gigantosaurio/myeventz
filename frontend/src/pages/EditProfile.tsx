@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getProfileImageUrl } from '../utils/imageUtils';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout/MainLayout';
 import { Input, Button, Card, Tag } from '../components/common';
@@ -81,7 +82,7 @@ export const EditProfile: React.FC = () => {
         });
 
         if (profileData.imagen_perfil) {
-          setImagePreview(profileData.imagen_perfil);
+          setImagePreview(getProfileImageUrl(profileData.imagen_perfil) || null);
         }
       } catch (err) {
         console.error('Error loading profile:', err);
