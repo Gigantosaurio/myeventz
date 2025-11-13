@@ -88,6 +88,14 @@ export const userService = {
     );
     return response.data.data!;
   },
+
+  /**
+   * Obtener eventos que le gustan a un usuario
+   */
+  async getUserLikedEvents(userId: number): Promise<Event[]> {
+    const response = await api.get<ApiResponse<Event[]>>(`/users/${userId}/events/liked`);
+    return response.data.data || [];
+  },
 };
 
 export default userService;

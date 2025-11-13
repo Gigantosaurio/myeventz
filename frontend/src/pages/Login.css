@@ -34,33 +34,26 @@
 .login-options {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-top: -0.25rem;
 }
 
-.login-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  user-select: none;
+.login-forgot-password-link {
+  background: none;
+  border: none;
+  padding: 0;
   font-size: 0.875rem;
-  color: var(--text-secondary);
-  transition: color var(--transition-fast);
-}
-
-.login-checkbox:hover {
   color: var(--primary);
-}
-
-.login-checkbox input[type="checkbox"] {
-  width: 1rem;
-  height: 1rem;
   cursor: pointer;
-  accent-color: var(--primary);
+  transition: opacity var(--transition-fast);
+  text-decoration: underline;
 }
 
-.login-checkbox input[type="checkbox"]:disabled {
+.login-forgot-password-link:hover {
+  opacity: 0.8;
+}
+
+.login-forgot-password-link:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
@@ -77,10 +70,80 @@
   opacity: 0.7;
 }
 
+/* Modal de recuperar contraseña */
+.login-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn var(--transition-normal);
+}
+
+.login-modal-content {
+  background: var(--bg-card);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: scaleIn var(--transition-normal);
+}
+
+.login-modal-content h2 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+}
+
+.login-modal-content p {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.login-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  justify-content: flex-end;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .login-form {
     gap: 0.875rem;
+  }
+
+  .login-modal-content {
+    padding: 1.5rem;
   }
 }
 

@@ -230,3 +230,23 @@ export const getAllUserEvents = async (req: AuthRequest, res: Response): Promise
     });
   }
 };
+
+/**
+ * GET /api/users/:id/events/liked
+ */
+export const getUserLikedEvents = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = parseInt(req.params.id);
+    const events = await userModel.getUserLikedEvents(userId);
+    res.json({
+      success: true,
+      data: events,
+    });
+  } catch (error) {
+    console.error('Error en getUserLikedEvents:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener eventos favoritos',
+    });
+  }
+};
