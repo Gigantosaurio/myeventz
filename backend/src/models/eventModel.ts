@@ -37,7 +37,6 @@ export const getPopularEvents = async (limit: number = 10): Promise<any[]> => {
     LEFT JOIN categorias c ON ec.id_categoria = c.id_categoria
     LEFT JOIN participantes_eventos pe ON e.id_evento = pe.id_evento
     LEFT JOIN eventos_likes el ON e.id_evento = el.id_evento
-    WHERE e.fecha >= CURDATE()
     GROUP BY e.id_evento, e.id_usuario, e.titulo, e.fecha, e.hora, e.descripcion,
              e.edad_min, e.edad_max, e.ubicacion, e.lat, e.lng, e.max_participantes,
              e.imagen, e.created_at, e.updated_at, u.nombre, u.apel1, u.apel2,
@@ -84,7 +83,6 @@ export const getRecentEvents = async (limit: number = 20): Promise<any[]> => {
     LEFT JOIN categorias c ON ec.id_categoria = c.id_categoria
     LEFT JOIN participantes_eventos pe ON e.id_evento = pe.id_evento
     LEFT JOIN eventos_likes el ON e.id_evento = el.id_evento
-    WHERE e.fecha >= CURDATE()
     GROUP BY e.id_evento, e.id_usuario, e.titulo, e.fecha, e.hora, e.descripcion,
              e.edad_min, e.edad_max, e.ubicacion, e.lat, e.lng, e.max_participantes,
              e.imagen, e.created_at, e.updated_at, u.nombre, u.apel1, u.apel2,
