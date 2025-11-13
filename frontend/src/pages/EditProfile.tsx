@@ -23,7 +23,6 @@ interface ProfileFormData {
 
 export const EditProfile: React.FC = () => {
   const navigate = useNavigate();
-  const currentUser = authService.getStoredUser();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -49,6 +48,8 @@ export const EditProfile: React.FC = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      const currentUser = authService.getStoredUser();
+
       if (!currentUser) {
         navigate('/login');
         return;
@@ -91,7 +92,7 @@ export const EditProfile: React.FC = () => {
     };
 
     loadData();
-  }, [currentUser, navigate]);
+  }, [navigate]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -161,6 +162,8 @@ export const EditProfile: React.FC = () => {
     e.preventDefault();
     setError(null);
     setSuccess(false);
+
+    const currentUser = authService.getStoredUser();
 
     if (!validateForm() || !currentUser) {
       return;
